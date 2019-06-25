@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-using Microsoft.MarkedNet;
+using MarkedNet;
 
 namespace AdaptiveCards.Rendering.Html
 {
