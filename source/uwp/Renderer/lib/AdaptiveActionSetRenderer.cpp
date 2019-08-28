@@ -5,8 +5,6 @@
 #include "AdaptiveActionSet.h"
 #include "AdaptiveActionSetRenderer.h"
 #include "AdaptiveElementParserRegistration.h"
-#include "enums.h"
-#include "Util.h"
 #include "XamlBuilder.h"
 
 using namespace Microsoft::WRL;

@@ -128,6 +128,7 @@
   <ItemGroup>
     <ClCompile Include="lib\AdaptiveHighlightColorConfig.cpp" />
     <ClCompile Include="lib\ElementTagContent.cpp" />
+    <ClCompile Include="lib\XamlBuilderText.cpp" />
     <ClInclude Include="lib\AdaptiveActionElement.h" />
     <ClInclude Include="lib\AdaptiveActionInvoker.h" />
     <ClInclude Include="lib\AdaptiveActionParserRegistration.h" />

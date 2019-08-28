@@ -3,10 +3,6 @@
 #include "pch.h"
 #include "AdaptiveActionSet.h"
 
-#include "Util.h"
-#include "Vector.h"
-#include <windows.foundation.collections.h>
-
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
 using namespace ABI::AdaptiveNamespace;
