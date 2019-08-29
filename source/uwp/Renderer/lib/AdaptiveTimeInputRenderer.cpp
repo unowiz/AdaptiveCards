@@ -10,6 +10,9 @@ using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
 using namespace ABI::AdaptiveNamespace;
 using namespace ABI::Windows::Foundation;
+using namespace ABI::Windows::Foundation::Collections;
+using namespace ABI::Windows::UI::Xaml;
+using namespace ABI::Windows::UI::Xaml::Controls;
 
 namespace AdaptiveNamespace
 {
@@ -39,4 +42,53 @@ namespace AdaptiveNamespace
             jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
     }
     CATCH_RETURN;
+
+HRESULT XamlBuilder::BuildTimeInput(_In_ IAdaptiveCardElement* adaptiveCardElement,
+                                        _In_ IAdaptiveRenderContext* renderContext,
+                                        _In_ IAdaptiveRenderArgs* /*renderArgs*/,
+                                        _COM_Outptr_ IUIElement** timeInputControl)
+    {
+        ComPtr<IAdaptiveHostConfig> hostConfig;
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+        if (!SupportsInteractivity(hostConfig.Get()))
+        {
+            renderContext->AddWarning(
+                ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
+                HStringReference(L"Time Input was stripped from card because interactivity is not supported").Get());
+            return S_OK;
+        }
+
+        ComPtr<ITimePicker> timePicker =
+            XamlHelpers::CreateXamlClass<ITimePicker>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_TimePicker));
+
+        // Make the picker stretch full width
+        ComPtr<IFrameworkElement> timePickerAsFrameworkElement;
+        RETURN_IF_FAILED(timePicker.As(&timePickerAsFrameworkElement));
+        RETURN_IF_FAILED(timePickerAsFrameworkElement->put_HorizontalAlignment(ABI::Windows::UI::Xaml::HorizontalAlignment_Stretch));
+        RETURN_IF_FAILED(timePickerAsFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
+
+        RETURN_IF_FAILED(
+            SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Time", timePickerAsFrameworkElement.Get()));
+
+        ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
+        ComPtr<IAdaptiveTimeInput> adaptiveTimeInput;
+        THROW_IF_FAILED(cardElement.As(&adaptiveTimeInput));
+
+        // Set initial value
+        HString hstringValue;
+        THROW_IF_FAILED(adaptiveTimeInput->get_Value(hstringValue.GetAddressOf()));
+        std::string value = HStringToUTF8(hstringValue.Get());
+        unsigned int hours, minutes;
+        if (DateTimePreparser::TryParseSimpleTime(value, hours, minutes))
+        {
+            TimeSpan initialTime{(INT64)(hours * 60 + minutes) * 10000000 * 60};
+            THROW_IF_FAILED(timePicker->put_Time(initialTime));
+        }
+
+        // Note: Placeholder text and min/max are not supported by ITimePicker
+
+        RETURN_IF_FAILED(timePicker.CopyTo(timeInputControl));
+        AddInputValueToContext(renderContext, adaptiveCardElement, *timeInputControl);
+        return S_OK;
+    }
 }

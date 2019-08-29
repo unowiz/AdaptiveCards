@@ -8,8 +8,11 @@
 #include "AdaptiveElementParserRegistration.h"
 #include "XamlBuilder.h"
 
-using namespace ABI::AdaptiveNamespace;
 using namespace Microsoft::WRL;
+using namespace ABI::AdaptiveNamespace;
+using namespace ABI::Windows::Foundation;
+using namespace ABI::Windows::UI::Xaml;
+using namespace ABI::Windows::UI::Xaml::Controls;
 
 namespace AdaptiveNamespace
 {
@@ -39,4 +42,68 @@ namespace AdaptiveNamespace
             jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
     }
     CATCH_RETURN;
+
+    HRESULT XamlBuilder::BuildShowCard(_In_ IAdaptiveCard* showCard,
+                                       _In_ IAdaptiveRenderContext* renderContext,
+                                       _In_ IAdaptiveRenderArgs* renderArgs,
+                                       bool isBottomActionBar,
+                                       _Outptr_ IUIElement** uiShowCard)
+    {
+        ComPtr<IAdaptiveHostConfig> hostConfig;
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+
+        ComPtr<IAdaptiveActionsConfig> actionsConfig;
+        RETURN_IF_FAILED(hostConfig->get_Actions(&actionsConfig));
+
+        ComPtr<IAdaptiveShowCardActionConfig> showCardActionConfig;
+        RETURN_IF_FAILED(actionsConfig->get_ShowCard(&showCardActionConfig));
+
+        ABI::AdaptiveNamespace::ContainerStyle showCardConfigStyle;
+        RETURN_IF_FAILED(showCardActionConfig->get_Style(&showCardConfigStyle));
+
+        boolean wasInShowCard;
+        RETURN_IF_FAILED(renderArgs->get_IsInShowCard(&wasInShowCard));
+        RETURN_IF_FAILED(renderArgs->put_IsInShowCard(true));
+
+        ComPtr<IFrameworkElement> localUiShowCard;
+        RETURN_IF_FAILED(BuildXamlTreeFromAdaptiveCard(showCard, localUiShowCard.GetAddressOf(), renderContext, nullptr, showCardConfigStyle));
+
+        RETURN_IF_FAILED(renderArgs->put_IsInShowCard(wasInShowCard));
+
+        ComPtr<IGrid2> showCardGrid;
+        RETURN_IF_FAILED(localUiShowCard.As(&showCardGrid));
+
+        // Set the padding
+        ComPtr<IAdaptiveSpacingConfig> spacingConfig;
+        RETURN_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
+
+        UINT32 padding;
+        RETURN_IF_FAILED(spacingConfig->get_Padding(&padding));
+
+        ABI::AdaptiveNamespace::ActionMode showCardActionMode;
+        RETURN_IF_FAILED(showCardActionConfig->get_ActionMode(&showCardActionMode));
+
+        // Set the top margin
+        ComPtr<IFrameworkElement> showCardFrameworkElement;
+        RETURN_IF_FAILED(localUiShowCard.As(&showCardFrameworkElement));
+
+        UINT32 inlineTopMargin;
+        RETURN_IF_FAILED(showCardActionConfig->get_InlineTopMargin(&inlineTopMargin));
+
+        double sideMargin = (double)padding * -1;
+        double topMargin = isBottomActionBar ? inlineTopMargin + padding : inlineTopMargin;
+        double bottomMargin = isBottomActionBar ? (double)padding * -1 : 0;
+
+        Thickness margin = {sideMargin, topMargin, sideMargin, bottomMargin};
+        RETURN_IF_FAILED(showCardFrameworkElement->put_Margin(margin));
+
+        ComPtr<IUIElement> showCardUIElement;
+        RETURN_IF_FAILED(localUiShowCard.As(&showCardUIElement));
+
+        // Set the visibility as Collapsed until the action is triggered
+        RETURN_IF_FAILED(showCardUIElement->put_Visibility(Visibility_Collapsed));
+
+        *uiShowCard = showCardUIElement.Detach();
+        return S_OK;
+    }
 }

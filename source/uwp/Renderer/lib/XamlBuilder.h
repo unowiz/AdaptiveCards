@@ -2,15 +2,12 @@
 // Licensed under the MIT License.
 #pragma once
 
-#include "AdaptiveCards.Rendering.Uwp.h"
 #include "ImageLoadTracker.h"
 #include "IXamlBuilderListener.h"
 #include "IImageLoadTrackerListener.h"
-#include <windows.storage.h>
 #include "InputValue.h"
 #include "RenderedAdaptiveCard.h"
 #include "AdaptiveRenderContext.h"
-#include <windows.ui.xaml.shapes.h>
 
 namespace AdaptiveNamespace
 {
@@ -37,8 +34,8 @@ namespace AdaptiveNamespace
             ABI::AdaptiveNamespace::ContainerStyle defaultContainerStyle = ABI::AdaptiveNamespace::ContainerStyle::Default);
         HRESULT AddListener(_In_ IXamlBuilderListener* listener) noexcept;
         HRESULT RemoveListener(_In_ IXamlBuilderListener* listener) noexcept;
-        HRESULT SetFixedDimensions(UINT width, UINT height) noexcept;
-        HRESULT SetEnableXamlImageHandling(bool enableXamlImageHandling) noexcept;
+        void SetFixedDimensions(UINT width, UINT height) noexcept;
+        void SetEnableXamlImageHandling(bool enableXamlImageHandling) noexcept;
 
         HRESULT BuildImage(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
                            _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
@@ -118,7 +115,7 @@ namespace AdaptiveNamespace
         template<typename T>
         static HRESULT TryGetResourceFromResourceDictionaries(_In_ ABI::Windows::UI::Xaml::IResourceDictionary* resourceDictionary,
                                                               std::wstring resourceName,
-                                                              _COM_Outptr_result_maybenull_ T** resource);
+                                                              _COM_Outptr_result_maybenull_ T** resource) noexcept;
 
         static HRESULT TryInsertResourceToResourceDictionaries(_In_ ABI::Windows::UI::Xaml::IResourceDictionary* resourceDictionary,
                                                                std::wstring resourceName,
@@ -126,7 +123,7 @@ namespace AdaptiveNamespace
 
         static HRESULT SetStyleFromResourceDictionary(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                                       std::wstring resourceName,
-                                                      _In_ ABI::Windows::UI::Xaml::IFrameworkElement* frameworkElement);
+                                                      _In_ ABI::Windows::UI::Xaml::IFrameworkElement* frameworkElement) noexcept;
 
         static HRESULT HandleToggleVisibilityClick(_In_ ABI::Windows::UI::Xaml::IFrameworkElement* cardFrameworkElement,
                                                    _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action);
@@ -158,6 +155,13 @@ namespace AdaptiveNamespace
                                           _In_ ABI::AdaptiveNamespace::IAdaptiveBackgroundImage* backgroundImage,
                                           _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                           _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs);
+
+        static HRESULT AddRenderedControl(_In_ ABI::Windows::UI::Xaml::IUIElement* newControl,
+                                          _In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* element,
+                                          _In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel,
+                                          _In_ ABI::Windows::UI::Xaml::IUIElement* separator,
+                                          _In_ ABI::Windows::UI::Xaml::Controls::IColumnDefinition* columnDefinition,
+                                          std::function<void(ABI::Windows::UI::Xaml::IUIElement* child)> childCreatedCallback);
 
         template<typename T>
         void SetAutoSize(T* destination, IInspectable* parentElement, IInspectable* imageContainer, bool isVisible, bool imageFiresOpenEvent);
@@ -205,31 +209,38 @@ namespace AdaptiveNamespace
             _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
             _Outptr_ ABI::Windows::UI::Xaml::IUIElement** actionSetControl);
 
-        static void XamlBuilder::HandleInlineAcion(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                                   _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-                                                   _In_ ABI::Windows::UI::Xaml::Controls::ITextBox* textBox,
-                                                   _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* inlineAction,
-                                                   _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** textBoxWithInlineAction);
+        static void HandleInlineAcion(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                      _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
+                                      _In_ ABI::Windows::UI::Xaml::Controls::ITextBox* textBox,
+                                      _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* inlineAction,
+                                      _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** textBoxWithInlineAction);
 
         static Microsoft::WRL::ComPtr<ABI::Windows::UI::Xaml::IUIElement> CreateSeparator(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                                                                           UINT spacing,
                                                                                           UINT separatorThickness,
                                                                                           ABI::Windows::UI::Color separatorColor,
                                                                                           bool isHorizontal = true);
-        static void ApplyMarginToXamlElement(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-                                             _In_ ABI::Windows::UI::Xaml::IFrameworkElement* element);
+
+        static HRESULT SetSeparatorVisibility(_In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel);
+
+        static void AddInputValueToContext(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                           _In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
+                                           _In_ ABI::Windows::UI::Xaml::IUIElement* inputUiElement);
+
         static void AddSeparatorIfNeeded(int& currentElement,
                                          _In_ ABI::AdaptiveCards::Rendering::Uwp::IAdaptiveCardElement* element,
                                          _In_ ABI::AdaptiveCards::Rendering::Uwp::IAdaptiveHostConfig* hostConfig,
                                          _In_ ABI::AdaptiveCards::Rendering::Uwp::IAdaptiveRenderContext* renderContext,
                                          _In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel,
                                          _Outptr_ ABI::Windows::UI::Xaml::IUIElement** addedSeparator);
+
         static HRESULT BuildPanelChildren(
             _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::IAdaptiveCardElement*>* children,
             _In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel,
             _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* context,
             _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-            std::function<void(ABI::Windows::UI::Xaml::IUIElement* child)> childCreatedCallback);
+            std::function<void(ABI::Windows::UI::Xaml::IUIElement* child)> childCreatedCallback) noexcept;
+
         static void GetSeparationConfigForElement(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* element,
                                                   _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
                                                   _Out_ UINT* spacing,
@@ -253,13 +264,23 @@ namespace AdaptiveNamespace
                                       const std::wstring& style,
                                       _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** finalElement);
 
-        void static HandleSelectAction(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
+        static HRESULT HandleColumnWidth(_In_ ABI::AdaptiveNamespace::IAdaptiveColumn* column,
+                                         boolean isVisible,
+                                         _In_ ABI::Windows::UI::Xaml::Controls::IColumnDefinition* columnDefinition);
+
+        static void HandleSelectAction(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
                                        _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* selectAction,
                                        _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                        _In_ ABI::Windows::UI::Xaml::IUIElement* uiElement,
                                        bool supportsInteractivity,
                                        bool fullWidthTouchTarget,
                                        _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** outUiElement);
+
+        static HRESULT HandleStylingAndPadding(_In_ ABI::AdaptiveNamespace::IAdaptiveContainerBase* adaptiveContainer,
+                                               _In_ ABI::Windows::UI::Xaml::Controls::IBorder* containerBorder,
+                                               _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                               _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
+                                               _Out_ ABI::AdaptiveNamespace::ContainerStyle* containerStyle);
 
         static void WireButtonClickToAction(_In_ ABI::Windows::UI::Xaml::Controls::IButton* button,
                                             _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
@@ -276,10 +297,15 @@ namespace AdaptiveNamespace
                                          _In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToMatch);
 
         template<typename T>
-        static void SetVerticalContentAlignmentToChildren(_In_ T* container,
-                                                          _In_ ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment);
+        static void SetVerticalContentAlignmentToChildren(_In_ T* container, _In_ ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment)
+        {
+            ComPtr<T> localContainer(container);
+            ComPtr<IWholeItemsPanel> containerAsPanel;
+            THROW_IF_FAILED(localContainer.As(&containerAsPanel));
 
-        static ABI::Windows::UI::Xaml::Thickness GetButtonMargin(_In_ ABI::AdaptiveNamespace::IAdaptiveActionsConfig* actionsConfig);
+            ComPtr<WholeItemsPanel> panel = PeekInnards<WholeItemsPanel>(containerAsPanel);
+            panel->SetVerticalContentAlignment(verticalContentAlignment);
+        }
 
         static HRESULT HandleActionStyling(_In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* adaptiveActionElement,
                                            _In_ ABI::Windows::UI::Xaml::IFrameworkElement* buttonFrameworkElement,
@@ -289,5 +315,41 @@ namespace AdaptiveNamespace
                                       _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                       _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
                                       _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result);
+
+        static inline HRESULT WarnFallbackString(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                 const std::string& warning)
+        {
+            HString warningMsg;
+            RETURN_IF_FAILED(UTF8ToHString(warning, warningMsg.GetAddressOf()));
+
+            RETURN_IF_FAILED(renderContext->AddWarning(ABI::AdaptiveNamespace::WarningStatusCode::PerformingFallback,
+                                                       warningMsg.Get()));
+            return S_OK;
+        }
+
+        static inline HRESULT WarnForFallbackContentElement(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                            _In_ HSTRING parentElementType,
+                                                            _In_ HSTRING fallbackElementType) try
+        {
+            std::string warning = "Performing fallback for element of type \"";
+            warning.append(HStringToUTF8(parentElementType));
+            warning.append("\" (fallback element type \"");
+            warning.append(HStringToUTF8(fallbackElementType));
+            warning.append("\")");
+
+            return WarnFallbackString(renderContext, warning);
+        }
+        CATCH_RETURN;
+
+        static inline HRESULT WarnForFallbackDrop(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                  _In_ HSTRING elementType) try
+        {
+            std::string warning = "Dropping element of type \"";
+            warning.append(HStringToUTF8(elementType));
+            warning.append("\" for fallback");
+
+            return WarnFallbackString(renderContext, warning);
+        }
+        CATCH_RETURN;
     };
 }

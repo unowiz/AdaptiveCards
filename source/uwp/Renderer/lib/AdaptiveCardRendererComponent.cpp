@@ -34,10 +34,6 @@
 #include "DefaultResourceDictionary.h"
 #include "InputValue.h"
 #include "RenderedAdaptiveCard.h"
-#include "XamlHelpers.h"
-#include <windows.foundation.collections.h>
-#include <Windows.UI.Xaml.h>
-#include <windows.ui.xaml.markup.h>
 
 using namespace concurrency;
 using namespace Microsoft::WRL;
@@ -138,7 +134,7 @@ namespace AdaptiveNamespace
 
             if (m_explicitDimensions)
             {
-                RETURN_IF_FAILED(m_xamlBuilder->SetFixedDimensions(m_desiredWidth, m_desiredHeight));
+                m_xamlBuilder->SetFixedDimensions(m_desiredWidth, m_desiredHeight);
             }
 
             ComPtr<AdaptiveRenderContext> renderContext;
