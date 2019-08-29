@@ -42,6 +42,7 @@
 #include "Util.h"
 #include "Vector.h"
 #include "XamlBuilder.h"
+#include "XamlHelpers.h"
 
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev, fac, code) \
