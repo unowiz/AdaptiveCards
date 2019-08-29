@@ -5,9 +5,6 @@
 #include "AdaptiveDateInput.h"
 #include "AdaptiveDateInputRenderer.h"
 #include "AdaptiveElementParserRegistration.h"
-#include "enums.h"
-#include "Util.h"
-#include "XamlBuilder.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;

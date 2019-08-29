@@ -5,8 +5,6 @@
 #include "AdaptiveTextBlock.h"
 #include "AdaptiveTextBlockRenderer.h"
 #include "AdaptiveRenderContext.h"
-#include "Util.h"
-#include "XamlBuilder.h"
 #include "AdaptiveElementParserRegistration.h"
 
 using namespace Microsoft::WRL;

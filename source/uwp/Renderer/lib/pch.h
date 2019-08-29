@@ -23,6 +23,7 @@
 #include <ppltasks.h>
 #include <sstream>
 #include <limits>
+#include <string>
 
 // The #define of this in winbase.h windows.ui.xaml.media.animation.h's IStoryboard defintion
 // so we need to remove it
@@ -40,6 +41,7 @@
 #include "ErrorHandling.h"
 #include "Util.h"
 #include "Vector.h"
+#include "XamlBuilder.h"
 
 #ifndef MAKE_HRESULT
 #define MAKE_HRESULT(sev, fac, code) \

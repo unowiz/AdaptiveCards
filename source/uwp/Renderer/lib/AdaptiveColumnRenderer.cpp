@@ -3,9 +3,6 @@
 #include "pch.h"
 
 #include "AdaptiveColumnRenderer.h"
-#include "enums.h"
-#include "Util.h"
-#include "XamlBuilder.h"
 #include "AdaptiveColumn.h"
 #include "AdaptiveElementParserRegistration.h"
 

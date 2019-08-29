@@ -5,9 +5,6 @@
 #include "AdaptiveElementParserRegistration.h"
 #include "AdaptiveImageSet.h"
 #include "AdaptiveImageSetRenderer.h"
-#include "enums.h"
-#include "Util.h"
-#include "XamlBuilder.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;

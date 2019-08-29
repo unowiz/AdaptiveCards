@@ -5,8 +5,6 @@
 #include "AdaptiveElementParserRegistration.h"
 #include "AdaptiveImage.h"
 #include "AdaptiveImageRenderer.h"
-#include "enums.h"
-#include "Util.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
