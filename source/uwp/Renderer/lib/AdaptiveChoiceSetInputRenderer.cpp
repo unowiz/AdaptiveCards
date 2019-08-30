@@ -17,18 +17,49 @@ using namespace ABI::Windows::UI::Xaml::Controls::Primitives;
 
 namespace AdaptiveNamespace
 {
-    HRESULT AdaptiveChoiceSetInputRenderer::RuntimeClassInitialize() noexcept try
+    HRESULT AdaptiveChoiceSetInputRenderer::RuntimeClassInitialize() noexcept
+    try
     {
         return S_OK;
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveChoiceSetInputRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveChoiceSetInputRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                                    _In_ IAdaptiveRenderContext* renderContext,
-                                                   _In_ IAdaptiveRenderArgs* renderArgs,
-                                                   _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
+                                                   _In_ IAdaptiveRenderArgs* /*renderArgs*/,
+                                                   _COM_Outptr_ IUIElement** choiceInputSet) noexcept try
     {
-        return XamlBuilder::BuildChoiceSetInput(cardElement, renderContext, renderArgs, result);
+        ComPtr<IAdaptiveHostConfig> hostConfig;
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        {
+            renderContext->AddWarning(
+                ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
+                HStringReference(L"ChoiceSet was stripped from card because interactivity is not supported").Get());
+            return S_OK;
+        }
+
+        ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
+        ComPtr<IAdaptiveChoiceSetInput> adaptiveChoiceSetInput;
+        RETURN_IF_FAILED(cardElement.As(&adaptiveChoiceSetInput));
+
+        ABI::AdaptiveNamespace::ChoiceSetStyle choiceSetStyle;
+        RETURN_IF_FAILED(adaptiveChoiceSetInput->get_ChoiceSetStyle(&choiceSetStyle));
+
+        boolean isMultiSelect;
+        RETURN_IF_FAILED(adaptiveChoiceSetInput->get_IsMultiSelect(&isMultiSelect));
+
+        if (choiceSetStyle == ABI::AdaptiveNamespace::ChoiceSetStyle_Compact && !isMultiSelect)
+        {
+            _BuildCompactChoiceSetInput(renderContext, adaptiveChoiceSetInput.Get(), choiceInputSet);
+        }
+        else
+        {
+            _BuildExpandedChoiceSetInput(renderContext, adaptiveChoiceSetInput.Get(), isMultiSelect, choiceInputSet);
+        }
+
+        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *choiceInputSet);
+        return S_OK;
     }
     CATCH_RETURN;
 
@@ -71,9 +102,9 @@ namespace AdaptiveNamespace
         return std::find(selectedValues.begin(), selectedValues.end(), stdValue) != selectedValues.end();
     }
 
-    HRESULT XamlBuilder::BuildCompactChoiceSetInput(_In_ IAdaptiveRenderContext* renderContext,
-                                                    _In_ IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
-                                                    _COM_Outptr_ IUIElement** choiceInputSet)
+    HRESULT AdaptiveChoiceSetInputRenderer::_BuildCompactChoiceSetInput(_In_ IAdaptiveRenderContext* renderContext,
+                                                                        _In_ IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
+                                                                        _COM_Outptr_ IUIElement** choiceInputSet)
     {
         ComPtr<IComboBox> comboBox =
             XamlHelpers::CreateXamlClass<IComboBox>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ComboBox));
@@ -131,17 +162,19 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> comboBoxAsUIElement;
         RETURN_IF_FAILED(comboBox.As(&comboBoxAsUIElement));
-        RETURN_IF_FAILED(AddHandledTappedEvent(comboBoxAsUIElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(comboBoxAsUIElement.Get()));
 
-        SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.ChoiceSet.Compact", comboBoxAsFrameworkElement.Get());
+        XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                    L"Adaptive.Input.ChoiceSet.Compact",
+                                                    comboBoxAsFrameworkElement.Get());
 
         return comboBoxAsUIElement.CopyTo(choiceInputSet);
     }
 
-    HRESULT XamlBuilder::BuildExpandedChoiceSetInput(_In_ IAdaptiveRenderContext* renderContext,
-                                                     _In_ IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
-                                                     boolean isMultiSelect,
-                                                     _COM_Outptr_ IUIElement** choiceInputSet)
+    HRESULT AdaptiveChoiceSetInputRenderer::_BuildExpandedChoiceSetInput(_In_ IAdaptiveRenderContext* renderContext,
+                                                                         _In_ IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
+                                                                         boolean isMultiSelect,
+                                                                         _COM_Outptr_ IUIElement** choiceInputSet)
     {
         ComPtr<IVector<AdaptiveChoiceInput*>> choices;
         RETURN_IF_FAILED(adaptiveChoiceSetInput->get_Choices(&choices));
@@ -169,7 +202,9 @@ namespace AdaptiveNamespace
 
                     ComPtr<IFrameworkElement> frameworkElement;
                     RETURN_IF_FAILED(checkBox.As(&frameworkElement));
-                    SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Choice.Multiselect", frameworkElement.Get());
+                    XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                L"Adaptive.Input.Choice.Multiselect",
+                                                                frameworkElement.Get());
 
                     XamlHelpers::SetToggleValue(choiceItem.Get(), IsChoiceSelected(values, adaptiveChoiceInput));
                 }
@@ -181,9 +216,9 @@ namespace AdaptiveNamespace
 
                     ComPtr<IFrameworkElement> frameworkElement;
                     RETURN_IF_FAILED(radioButton.As(&frameworkElement));
-                    SetStyleFromResourceDictionary(renderContext,
-                                                   L"Adaptive.Input.Choice.SingleSelect",
-                                                   frameworkElement.Get());
+                    XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                L"Adaptive.Input.Choice.SingleSelect",
+                                                                frameworkElement.Get());
 
                     if (values.size() == 1)
                     {
@@ -197,7 +232,7 @@ namespace AdaptiveNamespace
                 RETURN_IF_FAILED(adaptiveChoiceInput->get_Title(title.GetAddressOf()));
                 XamlHelpers::SetContent(choiceItem.Get(), title.Get(), wrap);
 
-                RETURN_IF_FAILED(AddHandledTappedEvent(choiceItem.Get()));
+                RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(choiceItem.Get()));
 
                 XamlHelpers::AppendXamlElementToPanel(choiceItem.Get(), panel.Get());
                 return S_OK;
@@ -205,48 +240,10 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> choiceSetAsFrameworkElement;
         RETURN_IF_FAILED(stackPanel.As(&choiceSetAsFrameworkElement));
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext,
-                                                        L"Adaptive.Input.ChoiceSet.Expanded",
-                                                        choiceSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                     L"Adaptive.Input.ChoiceSet.Expanded",
+                                                                     choiceSetAsFrameworkElement.Get()));
 
         return stackPanel.CopyTo(choiceInputSet);
-    }
-
-    HRESULT XamlBuilder::BuildChoiceSetInput(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                             _In_ IAdaptiveRenderContext* renderContext,
-                                             _In_ IAdaptiveRenderArgs* /*renderArgs*/,
-                                             _COM_Outptr_ IUIElement** choiceInputSet)
-    {
-        ComPtr<IAdaptiveHostConfig> hostConfig;
-        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!SupportsInteractivity(hostConfig.Get()))
-        {
-            renderContext->AddWarning(
-                ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
-                HStringReference(L"ChoiceSet was stripped from card because interactivity is not supported").Get());
-            return S_OK;
-        }
-
-        ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
-        ComPtr<IAdaptiveChoiceSetInput> adaptiveChoiceSetInput;
-        RETURN_IF_FAILED(cardElement.As(&adaptiveChoiceSetInput));
-
-        ABI::AdaptiveNamespace::ChoiceSetStyle choiceSetStyle;
-        RETURN_IF_FAILED(adaptiveChoiceSetInput->get_ChoiceSetStyle(&choiceSetStyle));
-
-        boolean isMultiSelect;
-        RETURN_IF_FAILED(adaptiveChoiceSetInput->get_IsMultiSelect(&isMultiSelect));
-
-        if (choiceSetStyle == ABI::AdaptiveNamespace::ChoiceSetStyle_Compact && !isMultiSelect)
-        {
-            BuildCompactChoiceSetInput(renderContext, adaptiveChoiceSetInput.Get(), choiceInputSet);
-        }
-        else
-        {
-            BuildExpandedChoiceSetInput(renderContext, adaptiveChoiceSetInput.Get(), isMultiSelect, choiceInputSet);
-        }
-
-        AddInputValueToContext(renderContext, adaptiveCardElement, *choiceInputSet);
-        return S_OK;
     }
 }

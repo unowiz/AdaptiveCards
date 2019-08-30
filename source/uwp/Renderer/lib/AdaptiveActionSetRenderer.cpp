@@ -4,6 +4,7 @@
 
 #include "AdaptiveActionSet.h"
 #include "AdaptiveActionSetRenderer.h"
+#include "AdaptiveShowCardActionRenderer.h"
 #include "AdaptiveElementParserRegistration.h"
 #include "AdaptiveImage.h"
 #include "AdaptiveRenderArgs.h"
@@ -25,15 +26,6 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveActionSetRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
-                                              _In_ IAdaptiveRenderContext* renderContext,
-                                              _In_ IAdaptiveRenderArgs* renderArgs,
-                                              _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildActionSet(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
     HRESULT AdaptiveActionSetRenderer::FromJson(
         _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
         _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
@@ -48,8 +40,8 @@ namespace AdaptiveNamespace
 
     template<typename T>
     static HRESULT TryGetResourceFromResourceDictionaries(_In_ IResourceDictionary* resourceDictionary,
-                                                                std::wstring resourceName,
-                                                                _COM_Outptr_ T** style) noexcept
+                                                          std::wstring resourceName,
+                                                          _COM_Outptr_ T** style) noexcept
     {
         if (resourceDictionary == nullptr)
         {
@@ -91,40 +83,7 @@ namespace AdaptiveNamespace
         return E_FAIL;
     }
 
-    HRESULT XamlBuilder::BuildActions(_In_ IAdaptiveCard* adaptiveCard,
-                                      _In_ IVector<IAdaptiveActionElement*>* children,
-                                      _In_ IPanel* bodyPanel,
-                                      bool insertSeparator,
-                                      _In_ IAdaptiveRenderContext* renderContext,
-                                      _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs)
-    {
-        ComPtr<IAdaptiveHostConfig> hostConfig;
-        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        ComPtr<IAdaptiveActionsConfig> actionsConfig;
-        RETURN_IF_FAILED(hostConfig->get_Actions(actionsConfig.GetAddressOf()));
-
-        // Create a separator between the body and the actions
-        if (insertSeparator)
-        {
-            ABI::AdaptiveNamespace::Spacing spacing;
-            RETURN_IF_FAILED(actionsConfig->get_Spacing(&spacing));
-
-            UINT spacingSize;
-            RETURN_IF_FAILED(GetSpacingSizeFromSpacing(hostConfig.Get(), spacing, &spacingSize));
-
-            ABI::Windows::UI::Color color = {0};
-            auto separator = CreateSeparator(renderContext, spacingSize, 0, color);
-            XamlHelpers::AppendXamlElementToPanel(separator.Get(), bodyPanel);
-        }
-
-        ComPtr<IUIElement> actionSetControl;
-        RETURN_IF_FAILED(BuildActionSetHelper(adaptiveCard, nullptr, children, renderContext, renderArgs, &actionSetControl));
-
-        XamlHelpers::AppendXamlElementToPanel(actionSetControl.Get(), bodyPanel);
-        return S_OK;
-    }
-
-    static HRESULT GetButtonMargin(_In_ IAdaptiveActionsConfig* actionsConfig, Thickness &buttonMargin) noexcept
+    static HRESULT GetButtonMargin(_In_ IAdaptiveActionsConfig* actionsConfig, Thickness& buttonMargin) noexcept
     {
         buttonMargin = {0, 0, 0, 0};
         UINT32 buttonSpacing;
@@ -228,11 +187,10 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveActionInvoker> actionInvoker;
         RETURN_IF_FAILED(renderContext->get_ActionInvoker(&actionInvoker));
         EventRegistrationToken clickToken;
-        RETURN_IF_FAILED(buttonBase->add_Click(Callback<IRoutedEventHandler>(
-                                                   [action, actionInvoker](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
-                                                       return actionInvoker->SendActionEvent(action.Get());
-                                                   })
-                                                   .Get(),
+        RETURN_IF_FAILED(buttonBase->add_Click(Callback<IRoutedEventHandler>([action, actionInvoker](IInspectable* /*sender*/, IRoutedEventArgs *
+                                                                                                     /*args*/) -> HRESULT {
+                                                   return actionInvoker->SendActionEvent(action.Get());
+                                               }).Get(),
                                                &clickToken));
 
         RETURN_IF_FAILED(HandleActionStyling(adaptiveActionElement, buttonFrameworkElement.Get(), renderContext));
@@ -318,38 +276,12 @@ namespace AdaptiveNamespace
         return S_OK;
     }
 
-    HRESULT XamlBuilder::BuildActionSet(_In_ IAdaptiveCardElement* adaptiveCardElement,
+    static HRESULT BuildActionSetHelper(_In_opt_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
+                                        _In_opt_ IAdaptiveActionSet* adaptiveActionSet,
+                                        _In_ IVector<IAdaptiveActionElement*>* children,
                                         _In_ IAdaptiveRenderContext* renderContext,
                                         _In_ IAdaptiveRenderArgs* renderArgs,
-                                        _COM_Outptr_ IUIElement** actionSetControl)
-    {
-        ComPtr<IAdaptiveHostConfig> hostConfig;
-        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-
-        if (!SupportsInteractivity(hostConfig.Get()))
-        {
-            renderContext->AddWarning(
-                ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
-                HStringReference(L"ActionSet was stripped from card because interactivity is not supported").Get());
-            return S_OK;
-        }
-
-        ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
-        ComPtr<IAdaptiveActionSet> adaptiveActionSet;
-        RETURN_IF_FAILED(cardElement.As(&adaptiveActionSet));
-
-        ComPtr<IVector<IAdaptiveActionElement*>> actions;
-        RETURN_IF_FAILED(adaptiveActionSet->get_Actions(&actions));
-
-        return BuildActionSetHelper(nullptr, adaptiveActionSet.Get(), actions.Get(), renderContext, renderArgs, actionSetControl);
-    }
-
-    HRESULT XamlBuilder::BuildActionSetHelper(_In_opt_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
-                                              _In_opt_ IAdaptiveActionSet* adaptiveActionSet,
-                                              _In_ IVector<IAdaptiveActionElement*>* children,
-                                              _In_ IAdaptiveRenderContext* renderContext,
-                                              _In_ IAdaptiveRenderArgs* renderArgs,
-                                              _Outptr_ IUIElement** actionSetControl)
+                                        _Outptr_ IUIElement** actionSetControl)
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
@@ -479,7 +411,7 @@ namespace AdaptiveNamespace
                         {
                         case ABI::AdaptiveNamespace::FallbackType::Drop:
                         {
-                            RETURN_IF_FAILED(WarnForFallbackDrop(renderContext, actionTypeString.Get()));
+                            RETURN_IF_FAILED(XamlBuilder::WarnForFallbackDrop(renderContext, actionTypeString.Get()));
                             return S_OK;
                         }
 
@@ -491,7 +423,7 @@ namespace AdaptiveNamespace
                             HString fallbackTypeString;
                             RETURN_IF_FAILED(actionFallback->get_ActionTypeString(fallbackTypeString.GetAddressOf()));
                             RETURN_IF_FAILED(
-                                WarnForFallbackContentElement(renderContext, actionTypeString.Get(), fallbackTypeString.Get()));
+                                XamlBuilder::WarnForFallbackContentElement(renderContext, actionTypeString.Get(), fallbackTypeString.Get()));
 
                             action = actionFallback;
                             break;
@@ -531,7 +463,7 @@ namespace AdaptiveNamespace
                         ComPtr<IAdaptiveCard> showCard;
                         RETURN_IF_FAILED(showCardAction->get_Card(&showCard));
 
-                        RETURN_IF_FAILED(BuildShowCard(
+                        RETURN_IF_FAILED(AdaptiveShowCardActionRenderer::BuildShowCard(
                             showCard.Get(), renderContext, renderArgs, (adaptiveActionSet == nullptr), uiShowCard.GetAddressOf()));
 
                         ComPtr<IPanel> showCardsPanel;
@@ -583,7 +515,7 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> actionsPanelAsFrameworkElement;
         RETURN_IF_FAILED(actionsPanel.As(&actionsPanelAsFrameworkElement));
         RETURN_IF_FAILED(
-            SetStyleFromResourceDictionary(renderContext, L"Adaptive.Actions", actionsPanelAsFrameworkElement.Get()));
+            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Actions", actionsPanelAsFrameworkElement.Get()));
 
         ComPtr<IStackPanel> actionSet =
             XamlHelpers::CreateXamlClass<IStackPanel>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_StackPanel));
@@ -689,8 +621,7 @@ namespace AdaptiveNamespace
                         RETURN_IF_FAILED(buttonText.As(&buttonTextAsFrameworkElement));
 
                         return SetMatchingHeight(buttonIconAsFrameworkElement.Get(), buttonTextAsFrameworkElement.Get());
-                    })
-                        .Get(),
+                    }).Get(),
                     &eventToken));
 
                 // Only add spacing when the icon must be located at the left of the title
@@ -727,4 +658,63 @@ namespace AdaptiveNamespace
         }
     }
 
+    HRESULT XamlBuilder::BuildActions(_In_ IAdaptiveCard* adaptiveCard,
+                                      _In_ IVector<IAdaptiveActionElement*>* children,
+                                      _In_ IPanel* bodyPanel,
+                                      bool insertSeparator,
+                                      _In_ IAdaptiveRenderContext* renderContext,
+                                      _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs)
+    {
+        ComPtr<IAdaptiveHostConfig> hostConfig;
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+        ComPtr<IAdaptiveActionsConfig> actionsConfig;
+        RETURN_IF_FAILED(hostConfig->get_Actions(actionsConfig.GetAddressOf()));
+
+        // Create a separator between the body and the actions
+        if (insertSeparator)
+        {
+            ABI::AdaptiveNamespace::Spacing spacing;
+            RETURN_IF_FAILED(actionsConfig->get_Spacing(&spacing));
+
+            UINT spacingSize;
+            RETURN_IF_FAILED(GetSpacingSizeFromSpacing(hostConfig.Get(), spacing, &spacingSize));
+
+            ABI::Windows::UI::Color color = {0};
+            auto separator = CreateSeparator(renderContext, spacingSize, 0, color);
+            XamlHelpers::AppendXamlElementToPanel(separator.Get(), bodyPanel);
+        }
+
+        ComPtr<IUIElement> actionSetControl;
+        RETURN_IF_FAILED(BuildActionSetHelper(adaptiveCard, nullptr, children, renderContext, renderArgs, &actionSetControl));
+
+        XamlHelpers::AppendXamlElementToPanel(actionSetControl.Get(), bodyPanel);
+        return S_OK;
+    }
+
+    HRESULT AdaptiveActionSetRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
+                                              _In_ IAdaptiveRenderContext* renderContext,
+                                              _In_ IAdaptiveRenderArgs* renderArgs,
+                                              _COM_Outptr_ IUIElement** actionSetControl) noexcept try
+    {
+        ComPtr<IAdaptiveHostConfig> hostConfig;
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+
+        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        {
+            renderContext->AddWarning(
+                ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
+                HStringReference(L"ActionSet was stripped from card because interactivity is not supported").Get());
+            return S_OK;
+        }
+
+        ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
+        ComPtr<IAdaptiveActionSet> adaptiveActionSet;
+        RETURN_IF_FAILED(cardElement.As(&adaptiveActionSet));
+
+        ComPtr<IVector<IAdaptiveActionElement*>> actions;
+        RETURN_IF_FAILED(adaptiveActionSet->get_Actions(&actions));
+
+        return BuildActionSetHelper(nullptr, adaptiveActionSet.Get(), actions.Get(), renderContext, renderArgs, actionSetControl);
+    }
+    CATCH_RETURN;
 }

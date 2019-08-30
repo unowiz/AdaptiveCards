@@ -22,35 +22,14 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveTimeInputRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveTimeInputRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                               _In_ IAdaptiveRenderContext* renderContext,
-                                              _In_ IAdaptiveRenderArgs* renderArgs,
-                                              _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildTimeInput(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveTimeInputRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveTimeInput, AdaptiveSharedNamespace::TimeInput, AdaptiveSharedNamespace::TimeInputParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-HRESULT XamlBuilder::BuildTimeInput(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                        _In_ IAdaptiveRenderContext* renderContext,
-                                        _In_ IAdaptiveRenderArgs* /*renderArgs*/,
-                                        _COM_Outptr_ IUIElement** timeInputControl)
+                                              _In_ IAdaptiveRenderArgs* /*renderArgs*/,
+                                              _COM_Outptr_ IUIElement** timeInputControl) noexcept try
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!SupportsInteractivity(hostConfig.Get()))
+        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -68,7 +47,7 @@ HRESULT XamlBuilder::BuildTimeInput(_In_ IAdaptiveCardElement* adaptiveCardEleme
         RETURN_IF_FAILED(timePickerAsFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
 
         RETURN_IF_FAILED(
-            SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Time", timePickerAsFrameworkElement.Get()));
+            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Time", timePickerAsFrameworkElement.Get()));
 
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveTimeInput> adaptiveTimeInput;
@@ -88,7 +67,20 @@ HRESULT XamlBuilder::BuildTimeInput(_In_ IAdaptiveCardElement* adaptiveCardEleme
         // Note: Placeholder text and min/max are not supported by ITimePicker
 
         RETURN_IF_FAILED(timePicker.CopyTo(timeInputControl));
-        AddInputValueToContext(renderContext, adaptiveCardElement, *timeInputControl);
+        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *timeInputControl);
         return S_OK;
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveTimeInputRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveTimeInput, AdaptiveSharedNamespace::TimeInput, AdaptiveSharedNamespace::TimeInputParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

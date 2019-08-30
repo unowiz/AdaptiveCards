@@ -23,31 +23,10 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveColumnRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveColumnRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                            _In_ IAdaptiveRenderContext* renderContext,
                                            _In_ IAdaptiveRenderArgs* renderArgs,
-                                           _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildColumn(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveColumnRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveColumn, AdaptiveSharedNamespace::Column, AdaptiveSharedNamespace::ColumnParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildColumn(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                     _In_ IAdaptiveRenderContext* renderContext,
-                                     _In_ IAdaptiveRenderArgs* renderArgs,
-                                     _COM_Outptr_ IUIElement** ColumnControl)
+                                           _COM_Outptr_ IUIElement** ColumnControl) noexcept try
     {
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveColumn> adaptiveColumn;
@@ -68,7 +47,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(adaptiveColumn.As(&columnAsContainerBase));
 
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        RETURN_IF_FAILED(HandleStylingAndPadding(columnAsContainerBase.Get(), columnBorder.Get(), renderContext, renderArgs, &containerStyle));
+        RETURN_IF_FAILED(XamlBuilder::HandleStylingAndPadding(columnAsContainerBase.Get(), columnBorder.Get(), renderContext, renderArgs, &containerStyle));
 
         ComPtr<IFrameworkElement> parentElement;
         RETURN_IF_FAILED(renderArgs->get_ParentElement(&parentElement));
@@ -80,8 +59,8 @@ namespace AdaptiveNamespace
 
         ComPtr<IVector<IAdaptiveCardElement*>> childItems;
         RETURN_IF_FAILED(adaptiveColumn->get_Items(&childItems));
-        RETURN_IF_FAILED(
-            BuildPanelChildren(childItems.Get(), columnAsPanel.Get(), renderContext, newRenderArgs.Get(), [](IUIElement*) {}));
+        RETURN_IF_FAILED(XamlBuilder::BuildPanelChildren(
+            childItems.Get(), columnAsPanel.Get(), renderContext, newRenderArgs.Get(), [](IUIElement*) {}));
 
         ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment;
         RETURN_IF_FAILED(adaptiveColumn->get_VerticalContentAlignment(&verticalContentAlignment));
@@ -94,7 +73,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(columnPanel.As(&columnPanelAsFrameworkElement));
         RETURN_IF_FAILED(columnPanelAsFrameworkElement->put_VerticalAlignment(VerticalAlignment_Stretch));
 
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
 
         UINT32 columnMinHeight{};
         RETURN_IF_FAILED(columnAsContainerBase->get_MinHeight(&columnMinHeight));
@@ -119,7 +98,7 @@ namespace AdaptiveNamespace
             ComPtr<IPanel> rootAsPanel;
             RETURN_IF_FAILED(rootElement.As(&rootAsPanel));
 
-            ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
+            XamlBuilder::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
 
             // get HeightType for column
             ABI::AdaptiveNamespace::HeightType columnHeightType{};
@@ -140,13 +119,26 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
 
-        HandleSelectAction(adaptiveCardElement,
+        XamlBuilder::HandleSelectAction(adaptiveCardElement,
                            selectAction.Get(),
                            renderContext,
                            columnAsUIElement.Get(),
-                           SupportsInteractivity(hostConfig.Get()),
+                           XamlBuilder::SupportsInteractivity(hostConfig.Get()),
                            false,
                            ColumnControl);
         return S_OK;
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveColumnRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveColumn, AdaptiveSharedNamespace::Column, AdaptiveSharedNamespace::ColumnParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

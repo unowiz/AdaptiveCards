@@ -4,9 +4,7 @@
 
 #include "AdaptiveShowCardAction.h"
 #include "AdaptiveShowCardActionRenderer.h"
-#include "Util.h"
 #include "AdaptiveElementParserRegistration.h"
-#include "XamlBuilder.h"
 
 using namespace Microsoft::WRL;
 using namespace ABI::AdaptiveNamespace;
@@ -43,11 +41,11 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT XamlBuilder::BuildShowCard(_In_ IAdaptiveCard* showCard,
-                                       _In_ IAdaptiveRenderContext* renderContext,
-                                       _In_ IAdaptiveRenderArgs* renderArgs,
-                                       bool isBottomActionBar,
-                                       _Outptr_ IUIElement** uiShowCard)
+    HRESULT AdaptiveShowCardActionRenderer::BuildShowCard(_In_ IAdaptiveCard* showCard,
+                                                          _In_ IAdaptiveRenderContext* renderContext,
+                                                          _In_ IAdaptiveRenderArgs* renderArgs,
+                                                          bool isBottomActionBar,
+                                                          _Outptr_ IUIElement** uiShowCard) noexcept try
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
@@ -66,7 +64,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(renderArgs->put_IsInShowCard(true));
 
         ComPtr<IFrameworkElement> localUiShowCard;
-        RETURN_IF_FAILED(BuildXamlTreeFromAdaptiveCard(showCard, localUiShowCard.GetAddressOf(), renderContext, nullptr, showCardConfigStyle));
+        RETURN_IF_FAILED(XamlBuilder::BuildXamlTreeFromAdaptiveCard(showCard, localUiShowCard.GetAddressOf(), renderContext, nullptr, showCardConfigStyle));
 
         RETURN_IF_FAILED(renderArgs->put_IsInShowCard(wasInShowCard));
 
@@ -106,4 +104,5 @@ namespace AdaptiveNamespace
         *uiShowCard = showCardUIElement.Detach();
         return S_OK;
     }
+    CATCH_RETURN;
 }

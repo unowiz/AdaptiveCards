@@ -23,31 +23,10 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveImageSetRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
-                                             _In_ IAdaptiveRenderContext* renderContext,
-                                             _In_ IAdaptiveRenderArgs* renderArgs,
-                                             _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildImageSet(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveImageSetRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveImageSet, AdaptiveSharedNamespace::ImageSet, AdaptiveSharedNamespace::ImageSetParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildImageSet(_In_ IAdaptiveCardElement* adaptiveCardElement,
+    HRESULT AdaptiveImageSetRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                        _In_ IAdaptiveRenderContext* renderContext,
                                        _In_ IAdaptiveRenderArgs* renderArgs,
-                                       _COM_Outptr_ IUIElement** imageSetControl)
+                                       _COM_Outptr_ IUIElement** imageSetControl) noexcept try
     {
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveImageSet> adaptiveImageSet;
@@ -121,8 +100,21 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> imageSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&imageSetAsFrameworkElement));
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.ImageSet", imageSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.ImageSet", imageSetAsFrameworkElement.Get()));
 
         return xamlGrid.CopyTo(imageSetControl);
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveImageSetRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveImageSet, AdaptiveSharedNamespace::ImageSet, AdaptiveSharedNamespace::ImageSetParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

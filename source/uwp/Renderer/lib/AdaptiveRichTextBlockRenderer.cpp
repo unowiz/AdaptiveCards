@@ -30,33 +30,11 @@ namespace AdaptiveNamespace
                                                   _In_ IAdaptiveRenderArgs* renderArgs,
                                                   _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
     {
-        XamlBuilder::BuildRichTextBlock(cardElement, renderContext, renderArgs, result);
-        return S_OK;
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveRichTextBlockRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveRichTextBlock, AdaptiveSharedNamespace::RichTextBlock, AdaptiveSharedNamespace::RichTextBlockParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildRichTextBlock(ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
-                                            ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                            ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-                                            ABI::Windows::UI::Xaml::IUIElement** textBlockControl)
-    {
         // Create the top level rich text block and set it's properties
         ComPtr<IRichTextBlock> xamlRichTextBlock =
             XamlHelpers::CreateXamlClass<IRichTextBlock>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_RichTextBlock));
 
-        ComPtr<IAdaptiveCardElement> localAdaptiveCardElement(adaptiveCardElement);
+        ComPtr<IAdaptiveCardElement> localAdaptiveCardElement(cardElement);
         ComPtr<IAdaptiveRichTextBlock> adaptiveRichTextBlock;
         RETURN_IF_FAILED(localAdaptiveCardElement.As(&adaptiveRichTextBlock));
 
@@ -186,6 +164,19 @@ namespace AdaptiveNamespace
             return S_OK;
         });
 
-        return xamlRichTextBlock.CopyTo(textBlockControl);
+        return xamlRichTextBlock.CopyTo(result);
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveRichTextBlockRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveRichTextBlock, AdaptiveSharedNamespace::RichTextBlock, AdaptiveSharedNamespace::RichTextBlockParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

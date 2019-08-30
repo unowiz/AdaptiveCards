@@ -23,35 +23,14 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveToggleInputRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveToggleInputRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                                 _In_ IAdaptiveRenderContext* renderContext,
-                                                _In_ IAdaptiveRenderArgs* renderArgs,
-                                                _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildToggleInput(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveToggleInputRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveToggleInput, AdaptiveSharedNamespace::ToggleInput, AdaptiveSharedNamespace::ToggleInputParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildToggleInput(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                          _In_ IAdaptiveRenderContext* renderContext,
-                                          _In_ IAdaptiveRenderArgs* /*renderArgs*/,
-                                          _COM_Outptr_ IUIElement** toggleInputControl)
+                                                _In_ IAdaptiveRenderArgs* /*renderArgs*/,
+                                                _COM_Outptr_ IUIElement** toggleInputControl) noexcept try
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!SupportsInteractivity(hostConfig.Get()))
+        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -87,15 +66,29 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> checkboxAsUIElement;
         RETURN_IF_FAILED(checkBox.As(&checkboxAsUIElement));
-        RETURN_IF_FAILED(AddHandledTappedEvent(checkboxAsUIElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(checkboxAsUIElement.Get()));
 
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(checkBox.As(&frameworkElement));
         RETURN_IF_FAILED(frameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Toggle", frameworkElement.Get()));
+        RETURN_IF_FAILED(
+            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Toggle", frameworkElement.Get()));
 
         RETURN_IF_FAILED(checkboxAsUIElement.CopyTo(toggleInputControl));
-        AddInputValueToContext(renderContext, adaptiveCardElement, *toggleInputControl);
+        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *toggleInputControl);
         return S_OK;
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveToggleInputRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveToggleInput, AdaptiveSharedNamespace::ToggleInput, AdaptiveSharedNamespace::ToggleInputParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

@@ -17,37 +17,17 @@ using namespace ABI::Windows::UI::Xaml::Controls;
 
 namespace AdaptiveNamespace
 {
-    HRESULT AdaptiveFactSetRenderer::RuntimeClassInitialize() noexcept try
+    HRESULT AdaptiveFactSetRenderer::RuntimeClassInitialize() noexcept
+    try
     {
         return S_OK;
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveFactSetRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveFactSetRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                             _In_ IAdaptiveRenderContext* renderContext,
                                             _In_ IAdaptiveRenderArgs* renderArgs,
-                                            _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildFactSet(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveFactSetRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveFactSet, AdaptiveSharedNamespace::FactSet, AdaptiveSharedNamespace::FactSetParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildFactSet(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                      _In_ IAdaptiveRenderContext* renderContext,
-                                      _In_ IAdaptiveRenderArgs* renderArgs,
-                                      _COM_Outptr_ IUIElement** factSetControl)
+                                            _COM_Outptr_ IUIElement** factSetControl) noexcept try
     {
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveFactSet> adaptiveFactSet;
@@ -141,12 +121,12 @@ namespace AdaptiveNamespace
                 // Add spacing from hostconfig to right margin of title.
                 titleTextBlockAsFrameWorkElement->put_Margin({0, 0, (double)spacing, 0});
 
-                RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext,
-                                                                L"Adaptive.Fact.Title",
-                                                                titleTextBlockAsFrameWorkElement.Get()));
-                RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext,
-                                                                L"Adaptive.Fact.Value",
-                                                                valueTextBlockAsFrameWorkElement.Get()));
+                RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                             L"Adaptive.Fact.Title",
+                                                                             titleTextBlockAsFrameWorkElement.Get()));
+                RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                             L"Adaptive.Fact.Value",
+                                                                             valueTextBlockAsFrameWorkElement.Get()));
 
                 RETURN_IF_FAILED(gridStatics->SetColumn(titleTextBlockAsFrameWorkElement.Get(), 0));
                 RETURN_IF_FAILED(gridStatics->SetRow(titleTextBlockAsFrameWorkElement.Get(), currentFact));
@@ -170,8 +150,21 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> factSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&factSetAsFrameworkElement));
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.FactSet", factSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.FactSet", factSetAsFrameworkElement.Get()));
 
         return xamlGrid.CopyTo(factSetControl);
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveFactSetRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveFactSet, AdaptiveSharedNamespace::FactSet, AdaptiveSharedNamespace::FactSetParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

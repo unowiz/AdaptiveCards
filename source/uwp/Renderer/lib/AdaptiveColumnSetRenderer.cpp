@@ -23,31 +23,10 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveColumnSetRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveColumnSetRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                               _In_ IAdaptiveRenderContext* renderContext,
                                               _In_ IAdaptiveRenderArgs* renderArgs,
-                                              _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildColumnSet(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveColumnSetRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveColumnSet, AdaptiveSharedNamespace::ColumnSet, AdaptiveSharedNamespace::ColumnSetParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildColumnSet(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                        _In_ IAdaptiveRenderContext* renderContext,
-                                        _In_ IAdaptiveRenderArgs* renderArgs,
-                                        _COM_Outptr_ IUIElement** columnSetControl)
+                                              _COM_Outptr_ IUIElement** columnSetControl) noexcept try
     {
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveColumnSet> adaptiveColumnSet;
@@ -68,8 +47,8 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(adaptiveColumnSet.As(&columnSetAsContainerBase));
 
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        RETURN_IF_FAILED(
-            HandleStylingAndPadding(columnSetAsContainerBase.Get(), columnSetBorder.Get(), renderContext, renderArgs, &containerStyle));
+        RETURN_IF_FAILED(XamlBuilder::HandleStylingAndPadding(
+            columnSetAsContainerBase.Get(), columnSetBorder.Get(), renderContext, renderArgs, &containerStyle));
 
         ComPtr<IFrameworkElement> parentElement;
         RETURN_IF_FAILED(renderArgs->get_ParentElement(&parentElement));
@@ -128,7 +107,7 @@ namespace AdaptiveNamespace
             HRESULT hr = columnRenderer->Render(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn);
             if (hr == E_PERFORM_FALLBACK)
             {
-                RETURN_IF_FAILED(RenderFallback(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn));
+                RETURN_IF_FAILED(XamlBuilder::RenderFallback(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn));
             }
 
             RETURN_IF_FAILED(newRenderArgs->put_AncestorHasFallback(ancestorHasFallback));
@@ -145,7 +124,7 @@ namespace AdaptiveNamespace
                     UINT spacing;
                     UINT separatorThickness;
                     ABI::Windows::UI::Color separatorColor;
-                    GetSeparationConfigForElement(
+                    XamlBuilder::GetSeparationConfigForElement(
                         columnAsCardElement.Get(), hostConfig.Get(), &spacing, &separatorThickness, &separatorColor, &needsSeparator);
 
                     if (needsSeparator)
@@ -156,7 +135,7 @@ namespace AdaptiveNamespace
                         RETURN_IF_FAILED(separatorColumnDefinition->put_Width({1.0, GridUnitType::GridUnitType_Auto}));
                         RETURN_IF_FAILED(columnDefinitions->Append(separatorColumnDefinition.Get()));
 
-                        separator = CreateSeparator(renderContext, spacing, separatorThickness, separatorColor, false);
+                        separator = XamlBuilder::CreateSeparator(renderContext, spacing, separatorThickness, separatorColor, false);
                         ComPtr<IFrameworkElement> separatorAsFrameworkElement;
                         RETURN_IF_FAILED(separator.As(&separatorAsFrameworkElement));
                         gridStatics->SetColumn(separatorAsFrameworkElement.Get(), currentColumn++);
@@ -171,7 +150,7 @@ namespace AdaptiveNamespace
                 boolean isVisible;
                 RETURN_IF_FAILED(columnAsCardElement->get_IsVisible(&isVisible));
 
-                RETURN_IF_FAILED(HandleColumnWidth(column, isVisible, columnDefinition.Get()));
+                RETURN_IF_FAILED(XamlBuilder::HandleColumnWidth(column, isVisible, columnDefinition.Get()));
 
                 RETURN_IF_FAILED(columnDefinitions->Append(columnDefinition.Get()));
 
@@ -181,23 +160,24 @@ namespace AdaptiveNamespace
                 gridStatics->SetColumn(columnAsFrameworkElement.Get(), currentColumn++);
 
                 // Finally add the column container to the grid
-                RETURN_IF_FAILED(AddRenderedControl(xamlColumn.Get(),
-                                                    columnAsCardElement.Get(),
-                                                    gridAsPanel.Get(),
-                                                    separator.Get(),
-                                                    columnDefinition.Get(),
-                                                    [](IUIElement*) {}));
+                RETURN_IF_FAILED(XamlBuilder::AddRenderedControl(xamlColumn.Get(),
+                                                                 columnAsCardElement.Get(),
+                                                                 gridAsPanel.Get(),
+                                                                 separator.Get(),
+                                                                 columnDefinition.Get(),
+                                                                 [](IUIElement*) {}));
             }
             return S_OK;
         });
         RETURN_IF_FAILED(hrColumns);
 
-        RETURN_IF_FAILED(SetSeparatorVisibility(gridAsPanel.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetSeparatorVisibility(gridAsPanel.Get()));
 
         ComPtr<IFrameworkElement> columnSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&columnSetAsFrameworkElement));
-        RETURN_IF_FAILED(
-            SetStyleFromResourceDictionary(renderContext, L"Adaptive.ColumnSet", columnSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                                                                     L"Adaptive.ColumnSet",
+                                                                     columnSetAsFrameworkElement.Get()));
         RETURN_IF_FAILED(columnSetAsFrameworkElement->put_VerticalAlignment(VerticalAlignment_Stretch));
 
         ComPtr<IAdaptiveActionElement> selectAction;
@@ -233,15 +213,16 @@ namespace AdaptiveNamespace
         ComPtr<IUIElement> columnSetBorderAsUIElement;
         RETURN_IF_FAILED(columnSetBorder.As(&columnSetBorderAsUIElement));
 
-        HandleSelectAction(adaptiveCardElement,
-                           selectAction.Get(),
-                           renderContext,
-                           columnSetBorderAsUIElement.Get(),
-                           SupportsInteractivity(hostConfig.Get()),
-                           true,
-                           columnSetControl);
+        XamlBuilder::HandleSelectAction(adaptiveCardElement,
+                                        selectAction.Get(),
+                                        renderContext,
+                                        columnSetBorderAsUIElement.Get(),
+                                        XamlBuilder::SupportsInteractivity(hostConfig.Get()),
+                                        true,
+                                        columnSetControl);
         return S_OK;
     }
+    CATCH_RETURN;
 
     HRESULT XamlBuilder::HandleColumnWidth(_In_ IAdaptiveColumn* column, boolean isVisible, _In_ IColumnDefinition* columnDefinition)
     {
@@ -293,4 +274,16 @@ namespace AdaptiveNamespace
 
         return S_OK;
     }
+
+    HRESULT AdaptiveColumnSetRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveColumnSet, AdaptiveSharedNamespace::ColumnSet, AdaptiveSharedNamespace::ColumnSetParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

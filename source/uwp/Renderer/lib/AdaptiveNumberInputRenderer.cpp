@@ -17,41 +17,21 @@ using namespace ABI::Windows::UI::Xaml::Input;
 
 namespace AdaptiveNamespace
 {
-    HRESULT AdaptiveNumberInputRenderer::RuntimeClassInitialize() noexcept try
+    HRESULT AdaptiveNumberInputRenderer::RuntimeClassInitialize() noexcept
+    try
     {
         return S_OK;
     }
     CATCH_RETURN;
 
-    HRESULT AdaptiveNumberInputRenderer::Render(_In_ IAdaptiveCardElement* cardElement,
+    HRESULT AdaptiveNumberInputRenderer::Render(_In_ IAdaptiveCardElement* adaptiveCardElement,
                                                 _In_ IAdaptiveRenderContext* renderContext,
-                                                _In_ IAdaptiveRenderArgs* renderArgs,
-                                                _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
-    {
-        return XamlBuilder::BuildNumberInput(cardElement, renderContext, renderArgs, result);
-    }
-    CATCH_RETURN;
-
-    HRESULT AdaptiveNumberInputRenderer::FromJson(
-        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
-        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
-        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
-    {
-        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveNumberInput, AdaptiveSharedNamespace::NumberInput, AdaptiveSharedNamespace::NumberInputParser>(
-            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
-    }
-    CATCH_RETURN;
-
-    HRESULT XamlBuilder::BuildNumberInput(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                          _In_ IAdaptiveRenderContext* renderContext,
-                                          _In_ IAdaptiveRenderArgs* /*renderArgs*/,
-                                          _COM_Outptr_ IUIElement** numberInputControl)
+                                                _In_ IAdaptiveRenderArgs* /*renderArgs*/,
+                                                _COM_Outptr_ IUIElement** numberInputControl) noexcept try
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!SupportsInteractivity(hostConfig.Get()))
+        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -94,12 +74,26 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(textBox.As(&frameworkElement));
         RETURN_IF_FAILED(frameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
-        RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
+        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
 
         // TODO: Handle max and min?
         RETURN_IF_FAILED(textBox.CopyTo(numberInputControl));
-        AddInputValueToContext(renderContext, adaptiveCardElement, *numberInputControl);
+        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *numberInputControl);
 
         return S_OK;
     }
+    CATCH_RETURN;
+
+    HRESULT AdaptiveNumberInputRenderer::FromJson(
+        _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
+        _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
+        _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept
+    try
+    {
+        return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveNumberInput, AdaptiveSharedNamespace::NumberInput, AdaptiveSharedNamespace::NumberInputParser>(
+            jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);
+    }
+    CATCH_RETURN;
 }

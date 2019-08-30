@@ -26,6 +26,16 @@ namespace AdaptiveNamespace
                                 _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParsers,
                                 _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
                                 _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept override;
+
+    private:
+        HRESULT _BuildExpandedChoiceSetInput(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                             _In_ ABI::AdaptiveNamespace::IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
+                                             boolean isMultiSelect,
+                                             _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** choiceInputSet);
+
+        HRESULT _BuildCompactChoiceSetInput(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                            _In_ ABI::AdaptiveNamespace::IAdaptiveChoiceSetInput* adaptiveChoiceSetInput,
+                                            _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** choiceInputSet);
     };
 
     ActivatableClass(AdaptiveChoiceSetInputRenderer);

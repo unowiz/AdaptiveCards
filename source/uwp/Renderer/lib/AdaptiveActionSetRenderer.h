@@ -11,9 +11,10 @@ namespace AdaptiveNamespace
                                               ABI::AdaptiveNamespace::IAdaptiveElementRenderer,
                                               ABI::AdaptiveNamespace::IAdaptiveElementParser>
     {
-        InspectableClass(RuntimeClass_AdaptiveCards_Rendering_Uwp_AdaptiveActionSetRenderer, BaseTrust)
+        InspectableClass(RuntimeClass_AdaptiveCards_Rendering_Uwp_AdaptiveActionSetRenderer, BaseTrust);
 
-            public : HRESULT RuntimeClassInitialize() noexcept;
+    public:
+        HRESULT RuntimeClassInitialize() noexcept;
 
         IFACEMETHODIMP Render(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* cardElement,
                               _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
