@@ -164,7 +164,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(comboBox.As(&comboBoxAsUIElement));
         RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(comboBoxAsUIElement.Get()));
 
-        XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+        XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                     L"Adaptive.Input.ChoiceSet.Compact",
                                                     comboBoxAsFrameworkElement.Get());
 
@@ -202,7 +202,7 @@ namespace AdaptiveNamespace
 
                     ComPtr<IFrameworkElement> frameworkElement;
                     RETURN_IF_FAILED(checkBox.As(&frameworkElement));
-                    XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                    XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                 L"Adaptive.Input.Choice.Multiselect",
                                                                 frameworkElement.Get());
 
@@ -216,7 +216,7 @@ namespace AdaptiveNamespace
 
                     ComPtr<IFrameworkElement> frameworkElement;
                     RETURN_IF_FAILED(radioButton.As(&frameworkElement));
-                    XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                    XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                 L"Adaptive.Input.Choice.SingleSelect",
                                                                 frameworkElement.Get());
 
@@ -240,7 +240,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> choiceSetAsFrameworkElement;
         RETURN_IF_FAILED(stackPanel.As(&choiceSetAsFrameworkElement));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                      L"Adaptive.Input.ChoiceSet.Expanded",
                                                                      choiceSetAsFrameworkElement.Get()));
 

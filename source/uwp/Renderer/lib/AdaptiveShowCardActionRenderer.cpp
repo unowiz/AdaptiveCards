@@ -5,6 +5,7 @@
 #include "AdaptiveShowCardAction.h"
 #include "AdaptiveShowCardActionRenderer.h"
 #include "AdaptiveElementParserRegistration.h"
+#include "ActionHelpers.h"
 
 using namespace Microsoft::WRL;
 using namespace ABI::AdaptiveNamespace;
@@ -25,7 +26,7 @@ namespace AdaptiveNamespace
                                                    _In_ IAdaptiveRenderArgs* renderArgs,
                                                    _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** result) noexcept try
     {
-        return XamlBuilder::BuildAction(action, renderContext, renderArgs, result);
+        return ActionHelpers::BuildAction(action, renderContext, renderArgs, result);
     }
     CATCH_RETURN;
 

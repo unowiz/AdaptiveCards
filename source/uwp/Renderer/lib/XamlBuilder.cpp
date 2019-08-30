@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 #include "pch.h"
 
+#include "XamlBuilder.h"
+
 #include "AdaptiveBase64Util.h"
 #include "AdaptiveCardGetResourceStreamArgs.h"
 #include "AdaptiveCardRendererComponent.h"
@@ -26,7 +28,7 @@
 #include "WholeItemsPanel.h"
 #include <windows.web.http.h>
 #include <windows.web.http.filters.h>
-#include "XamlBuilder.h"
+#include "ActionHelpers.h"
 #include "XamlHelpers.h"
 
 using namespace Microsoft::WRL;
@@ -63,45 +65,6 @@ namespace AdaptiveNamespace
 
         THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Storage_Streams_RandomAccessStream).Get(),
                                              &m_randomAccessStreamStatics));
-    }
-
-    ComPtr<IUIElement> XamlBuilder::CreateSeparator(_In_ IAdaptiveRenderContext* renderContext,
-                                                    UINT spacing,
-                                                    UINT separatorThickness,
-                                                    ABI::Windows::UI::Color separatorColor,
-                                                    bool isHorizontal)
-    {
-        ComPtr<IGrid> separator =
-            XamlHelpers::CreateXamlClass<IGrid>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Grid));
-        ComPtr<IFrameworkElement> separatorAsFrameworkElement;
-        THROW_IF_FAILED(separator.As(&separatorAsFrameworkElement));
-
-        ComPtr<IBrush> lineColorBrush = XamlHelpers::GetSolidColorBrush(separatorColor);
-        ComPtr<IPanel> separatorAsPanel;
-        THROW_IF_FAILED(separator.As(&separatorAsPanel));
-        separatorAsPanel->put_Background(lineColorBrush.Get());
-
-        UINT32 separatorMarginValue = spacing > separatorThickness ? (spacing - separatorThickness) / 2 : 0;
-        Thickness margin = {0, 0, 0, 0};
-
-        if (isHorizontal)
-        {
-            margin.Top = margin.Bottom = separatorMarginValue;
-            separatorAsFrameworkElement->put_Height(separatorThickness);
-        }
-        else
-        {
-            margin.Left = margin.Right = separatorMarginValue;
-            separatorAsFrameworkElement->put_Width(separatorThickness);
-        }
-
-        THROW_IF_FAILED(separatorAsFrameworkElement->put_Margin(margin));
-
-        THROW_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Separator", separatorAsFrameworkElement.Get()));
-
-        ComPtr<IUIElement> result;
-        THROW_IF_FAILED(separator.As(&result));
-        return result;
     }
 
     HRESULT XamlBuilder::AllImagesLoaded()
@@ -217,12 +180,14 @@ namespace AdaptiveNamespace
 
             if (!isInShowCard)
             {
-                RETURN_IF_FAILED(SetStyleFromResourceDictionary(renderContext, L"Adaptive.Card", rootAsFrameworkElement.Get()));
+                RETURN_IF_FAILED(
+                    XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Card", rootAsFrameworkElement.Get()));
             }
             else
             {
-                RETURN_IF_FAILED(
-                    SetStyleFromResourceDictionary(renderContext, L"Adaptive.ShowCard.Card", rootAsFrameworkElement.Get()));
+                RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
+                                                                             L"Adaptive.ShowCard.Card",
+                                                                             rootAsFrameworkElement.Get()));
             }
 
             RETURN_IF_FAILED(rootAsFrameworkElement.CopyTo(xamlTreeRoot));
@@ -246,7 +211,8 @@ namespace AdaptiveNamespace
         return S_OK;
     }
 
-    HRESULT XamlBuilder::AddListener(_In_ IXamlBuilderListener* listener) noexcept try
+    HRESULT XamlBuilder::AddListener(_In_ IXamlBuilderListener* listener) noexcept
+    try
     {
         if (m_listeners.find(listener) == m_listeners.end())
         {
@@ -260,7 +226,8 @@ namespace AdaptiveNamespace
     }
     CATCH_RETURN;
 
-    HRESULT XamlBuilder::RemoveListener(_In_ IXamlBuilderListener* listener) noexcept try
+    HRESULT XamlBuilder::RemoveListener(_In_ IXamlBuilderListener* listener) noexcept
+    try
     {
         if (m_listeners.find(listener) != m_listeners.end())
         {
@@ -284,46 +251,6 @@ namespace AdaptiveNamespace
     void XamlBuilder::SetEnableXamlImageHandling(bool enableXamlImageHandling) noexcept
     {
         m_enableXamlImageHandling = enableXamlImageHandling;
-    }
-
-    template<typename T>
-    HRESULT XamlBuilder::TryGetResourceFromResourceDictionaries(_In_ IResourceDictionary* resourceDictionary,
-                                                                std::wstring resourceName,
-                                                                _COM_Outptr_ T** style) noexcept
-    {
-        if (resourceDictionary == nullptr)
-        {
-            return E_INVALIDARG;
-        }
-
-        *style = nullptr;
-
-        // Get a resource key for the requested style that we can use for ResourceDictionary Lookups
-        ComPtr<IPropertyValueStatics> propertyValueStatics;
-        RETURN_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Foundation_PropertyValue).Get(),
-                                              &propertyValueStatics));
-
-        ComPtr<IInspectable> resourceKey;
-        RETURN_IF_FAILED(propertyValueStatics->CreateString(HStringReference(resourceName.c_str()).Get(), resourceKey.GetAddressOf()));
-
-        // Search for the named resource
-        ComPtr<IResourceDictionary> strongDictionary = resourceDictionary;
-        ComPtr<IMap<IInspectable*, IInspectable*>> resourceDictionaryMap;
-
-        boolean hasKey{};
-        RETURN_IF_FAILED(strongDictionary.As(&resourceDictionaryMap));
-        RETURN_IF_FAILED(resourceDictionaryMap->HasKey(resourceKey.Get(), &hasKey));
-        if (hasKey)
-        {
-            ComPtr<IInspectable> dictionaryValue;
-            RETURN_IF_FAILED(resourceDictionaryMap->Lookup(resourceKey.Get(), dictionaryValue.GetAddressOf()));
-
-            ComPtr<T> resourceToReturn;
-            RETURN_IF_FAILED(dictionaryValue.As(&resourceToReturn));
-            RETURN_IF_FAILED(resourceToReturn.CopyTo(style));
-        }
-
-        return E_FAIL;
     }
 
     HRESULT XamlBuilder::TryInsertResourceToResourceDictionaries(_In_ IResourceDictionary* resourceDictionary,
@@ -357,22 +284,6 @@ namespace AdaptiveNamespace
         {
         }
         return E_FAIL;
-    }
-
-    HRESULT XamlBuilder::SetStyleFromResourceDictionary(_In_ IAdaptiveRenderContext* renderContext,
-                                                        std::wstring resourceName,
-                                                        _In_ IFrameworkElement* frameworkElement) noexcept
-    {
-        ComPtr<IResourceDictionary> resourceDictionary;
-        RETURN_IF_FAILED(renderContext->get_OverrideStyles(&resourceDictionary));
-
-        ComPtr<IStyle> style;
-        if (SUCCEEDED(TryGetResourceFromResourceDictionaries<IStyle>(resourceDictionary.Get(), resourceName, &style)))
-        {
-            RETURN_IF_FAILED(frameworkElement->put_Style(style.Get()));
-        }
-
-        return S_OK;
     }
 
     static void ApplyMarginToXamlElement(_In_ IAdaptiveHostConfig* hostConfig, _In_ IFrameworkElement* element)
@@ -534,7 +445,9 @@ namespace AdaptiveNamespace
         ComPtr<IResourceDictionary> resourceDictionary;
         THROW_IF_FAILED(renderContext->get_OverrideStyles(&resourceDictionary));
         ComPtr<IBrush> backgroundOverlayBrush;
-        if (SUCCEEDED(TryGetResourceFromResourceDictionaries<IBrush>(resourceDictionary.Get(), c_BackgroundImageOverlayBrushKey, &backgroundOverlayBrush)))
+        if (SUCCEEDED(XamlHelpers::TryGetResourceFromResourceDictionaries<IBrush>(resourceDictionary.Get(),
+                                                                                  c_BackgroundImageOverlayBrushKey,
+                                                                                  &backgroundOverlayBrush)))
         {
             ComPtr<IShape> overlayRectangle =
                 XamlHelpers::CreateXamlClass<IShape>(HStringReference(RuntimeClass_Windows_UI_Xaml_Shapes_Rectangle));
@@ -621,7 +534,7 @@ namespace AdaptiveNamespace
             GetSeparationConfigForElement(element, hostConfig, &spacing, &separatorThickness, &separatorColor, &needsSeparator);
             if (needsSeparator)
             {
-                auto separator = CreateSeparator(renderContext, spacing, separatorThickness, separatorColor);
+                auto separator = XamlHelpers::CreateSeparator(renderContext, spacing, separatorThickness, separatorColor);
                 XamlHelpers::AppendXamlElementToPanel(separator.Get(), parentPanel);
                 THROW_IF_FAILED(separator.CopyTo(addedSeparator));
             }
@@ -1039,20 +952,6 @@ namespace AdaptiveNamespace
         return S_OK;
     }
 
-    HRESULT XamlBuilder::SetMatchingHeight(_In_ IFrameworkElement* elementToChange, _In_ IFrameworkElement* elementToMatch)
-    {
-        DOUBLE actualHeight;
-        RETURN_IF_FAILED(elementToMatch->get_ActualHeight(&actualHeight));
-
-        ComPtr<IFrameworkElement> localElement(elementToChange);
-        RETURN_IF_FAILED(localElement->put_Height(actualHeight));
-
-        ComPtr<IUIElement> frameworkElementAsUIElement;
-        RETURN_IF_FAILED(localElement.As(&frameworkElementAsUIElement));
-        RETURN_IF_FAILED(frameworkElementAsUIElement->put_Visibility(Visibility::Visibility_Visible));
-        return S_OK;
-    }
-
     HRESULT XamlBuilder::HandleStylingAndPadding(_In_ IAdaptiveContainerBase* adaptiveContainer,
                                                  _In_ IBorder* containerBorder,
                                                  _In_ IAdaptiveRenderContext* renderContext,
@@ -1150,332 +1049,11 @@ namespace AdaptiveNamespace
         THROW_IF_FAILED(renderContext->AddInputValue(input.Get()));
     }
 
-    static HRESULT HandleKeydownForInlineAction(_In_ IKeyRoutedEventArgs* args,
-                                                _In_ IAdaptiveActionInvoker* actionInvoker,
-                                                _In_ IAdaptiveActionElement* inlineAction)
-    {
-        ABI::Windows::System::VirtualKey key;
-        RETURN_IF_FAILED(args->get_Key(&key));
-
-        if (key == ABI::Windows::System::VirtualKey::VirtualKey_Enter)
-        {
-            ComPtr<ABI::Windows::UI::Core::ICoreWindowStatic> coreWindowStatics;
-            RETURN_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_UI_Core_CoreWindow).Get(), &coreWindowStatics));
-
-            ComPtr<ABI::Windows::UI::Core::ICoreWindow> coreWindow;
-            RETURN_IF_FAILED(coreWindowStatics->GetForCurrentThread(&coreWindow));
-
-            ABI::Windows::UI::Core::CoreVirtualKeyStates shiftKeyState;
-            RETURN_IF_FAILED(coreWindow->GetKeyState(ABI::Windows::System::VirtualKey_Shift, &shiftKeyState));
-
-            ABI::Windows::UI::Core::CoreVirtualKeyStates ctrlKeyState;
-            RETURN_IF_FAILED(coreWindow->GetKeyState(ABI::Windows::System::VirtualKey_Control, &ctrlKeyState));
-
-            if (shiftKeyState == ABI::Windows::UI::Core::CoreVirtualKeyStates_None &&
-                ctrlKeyState == ABI::Windows::UI::Core::CoreVirtualKeyStates_None)
-            {
-                RETURN_IF_FAILED(actionInvoker->SendActionEvent(inlineAction));
-                RETURN_IF_FAILED(args->put_Handled(true));
-            }
-        }
-
-        return S_OK;
-    }
-
-    static bool WarnForInlineShowCard(_In_ IAdaptiveRenderContext* renderContext,
-                                      _In_ IAdaptiveActionElement* action,
-                                      const std::wstring& warning)
-    {
-        if (action != nullptr)
-        {
-            ABI::AdaptiveNamespace::ActionType actionType;
-            THROW_IF_FAILED(action->get_ActionType(&actionType));
-
-            if (actionType == ABI::AdaptiveNamespace::ActionType::ShowCard)
-            {
-                THROW_IF_FAILED(renderContext->AddWarning(ABI::AdaptiveNamespace::WarningStatusCode::UnsupportedValue,
-                                                          HStringReference(warning.c_str()).Get()));
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void XamlBuilder::HandleInlineAcion(_In_ IAdaptiveRenderContext* renderContext,
-                                        _In_ IAdaptiveRenderArgs* renderArgs,
-                                        _In_ ITextBox* textBox,
-                                        _In_ IAdaptiveActionElement* inlineAction,
-                                        _COM_Outptr_ IUIElement** textBoxWithInlineAction)
-    {
-        ComPtr<ITextBox> localTextBox(textBox);
-        ComPtr<IAdaptiveActionElement> localInlineAction(inlineAction);
-
-        ABI::AdaptiveNamespace::ActionType actionType;
-        THROW_IF_FAILED(localInlineAction->get_ActionType(&actionType));
-
-        ComPtr<IAdaptiveHostConfig> hostConfig;
-        THROW_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-
-        // Inline ShowCards are not supported for inline actions
-        if (WarnForInlineShowCard(renderContext, localInlineAction.Get(), L"Inline ShowCard not supported for InlineAction"))
-        {
-            THROW_IF_FAILED(localTextBox.CopyTo(textBoxWithInlineAction));
-            return;
-        }
-
-        // Create a grid to hold the text box and the action button
-        ComPtr<IGridStatics> gridStatics;
-        THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Grid).Get(), &gridStatics));
-
-        ComPtr<IGrid> xamlGrid =
-            XamlHelpers::CreateXamlClass<IGrid>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Grid));
-        ComPtr<IVector<ColumnDefinition*>> columnDefinitions;
-        THROW_IF_FAILED(xamlGrid->get_ColumnDefinitions(&columnDefinitions));
-        ComPtr<IPanel> gridAsPanel;
-        THROW_IF_FAILED(xamlGrid.As(&gridAsPanel));
-
-        // Create the first column and add the text box to it
-        ComPtr<IColumnDefinition> textBoxColumnDefinition = XamlHelpers::CreateXamlClass<IColumnDefinition>(
-            HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ColumnDefinition));
-        THROW_IF_FAILED(textBoxColumnDefinition->put_Width({1, GridUnitType::GridUnitType_Star}));
-        THROW_IF_FAILED(columnDefinitions->Append(textBoxColumnDefinition.Get()));
-
-        ComPtr<IFrameworkElement> textBoxAsFrameworkElement;
-        THROW_IF_FAILED(localTextBox.As(&textBoxAsFrameworkElement));
-
-        THROW_IF_FAILED(gridStatics->SetColumn(textBoxAsFrameworkElement.Get(), 0));
-        XamlHelpers::AppendXamlElementToPanel(textBox, gridAsPanel.Get());
-
-        // Create a separator column
-        ComPtr<IColumnDefinition> separatorColumnDefinition = XamlHelpers::CreateXamlClass<IColumnDefinition>(
-            HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ColumnDefinition));
-        THROW_IF_FAILED(separatorColumnDefinition->put_Width({1.0, GridUnitType::GridUnitType_Auto}));
-        THROW_IF_FAILED(columnDefinitions->Append(separatorColumnDefinition.Get()));
-
-        UINT spacingSize;
-        THROW_IF_FAILED(GetSpacingSizeFromSpacing(hostConfig.Get(), ABI::AdaptiveNamespace::Spacing::Default, &spacingSize));
-
-        auto separator = CreateSeparator(renderContext, spacingSize, 0, {0}, false);
-
-        ComPtr<IFrameworkElement> separatorAsFrameworkElement;
-        THROW_IF_FAILED(separator.As(&separatorAsFrameworkElement));
-
-        THROW_IF_FAILED(gridStatics->SetColumn(separatorAsFrameworkElement.Get(), 1));
-        XamlHelpers::AppendXamlElementToPanel(separator.Get(), gridAsPanel.Get());
-
-        // Create a column for the button
-        ComPtr<IColumnDefinition> inlineActionColumnDefinition = XamlHelpers::CreateXamlClass<IColumnDefinition>(
-            HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ColumnDefinition));
-        THROW_IF_FAILED(inlineActionColumnDefinition->put_Width({0, GridUnitType::GridUnitType_Auto}));
-        THROW_IF_FAILED(columnDefinitions->Append(inlineActionColumnDefinition.Get()));
-
-        // Create a text box with the action title. This will be the tool tip if there's an icon
-        // or the content of the button otherwise
-        ComPtr<ITextBlock> titleTextBlock =
-            XamlHelpers::CreateXamlClass<ITextBlock>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_TextBlock));
-        HString title;
-        THROW_IF_FAILED(localInlineAction->get_Title(title.GetAddressOf()));
-        THROW_IF_FAILED(titleTextBlock->put_Text(title.Get()));
-
-        HString iconUrl;
-        THROW_IF_FAILED(localInlineAction->get_IconUrl(iconUrl.GetAddressOf()));
-        ComPtr<IUIElement> actionUIElement;
-        if (iconUrl != nullptr)
-        {
-            // Render the icon using the adaptive image renderer
-            ComPtr<IAdaptiveElementRendererRegistration> elementRenderers;
-            THROW_IF_FAILED(renderContext->get_ElementRenderers(&elementRenderers));
-            ComPtr<IAdaptiveElementRenderer> imageRenderer;
-            THROW_IF_FAILED(elementRenderers->Get(HStringReference(L"Image").Get(), &imageRenderer));
-
-            ComPtr<IAdaptiveImage> adaptiveImage;
-            THROW_IF_FAILED(MakeAndInitialize<AdaptiveImage>(&adaptiveImage));
-
-            THROW_IF_FAILED(adaptiveImage->put_Url(iconUrl.Get()));
-
-            ComPtr<IAdaptiveCardElement> adaptiveImageAsElement;
-            THROW_IF_FAILED(adaptiveImage.As(&adaptiveImageAsElement));
-
-            THROW_IF_FAILED(imageRenderer->Render(adaptiveImageAsElement.Get(), renderContext, renderArgs, &actionUIElement));
-
-            // Add the tool tip
-            ComPtr<IToolTip> toolTip =
-                XamlHelpers::CreateXamlClass<IToolTip>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ToolTip));
-            ComPtr<IContentControl> toolTipAsContentControl;
-            THROW_IF_FAILED(toolTip.As(&toolTipAsContentControl));
-            THROW_IF_FAILED(toolTipAsContentControl->put_Content(titleTextBlock.Get()));
-
-            ComPtr<IToolTipServiceStatics> toolTipService;
-            THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_ToolTipService).Get(),
-                                                 &toolTipService));
-
-            ComPtr<IDependencyObject> actionAsDependencyObject;
-            THROW_IF_FAILED(actionUIElement.As(&actionAsDependencyObject));
-
-            THROW_IF_FAILED(toolTipService->SetToolTip(actionAsDependencyObject.Get(), toolTip.Get()));
-        }
-        else
-        {
-            // If there's no icon, just use the title text. Put it centered in a grid so it is
-            // centered relative to the text box.
-            ComPtr<IFrameworkElement> textBlockAsFrameworkElement;
-            THROW_IF_FAILED(titleTextBlock.As(&textBlockAsFrameworkElement));
-            THROW_IF_FAILED(textBlockAsFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Center));
-
-            ComPtr<IGrid> titleGrid =
-                XamlHelpers::CreateXamlClass<IGrid>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Grid));
-            ComPtr<IPanel> panel;
-            THROW_IF_FAILED(titleGrid.As(&panel));
-            XamlHelpers::AppendXamlElementToPanel(titleTextBlock.Get(), panel.Get());
-
-            THROW_IF_FAILED(panel.As(&actionUIElement));
-        }
-
-        // Make the action the same size as the text box
-        EventRegistrationToken eventToken;
-        THROW_IF_FAILED(textBoxAsFrameworkElement->add_Loaded(
-            Callback<IRoutedEventHandler>(
-                [actionUIElement, textBoxAsFrameworkElement](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
-                    ComPtr<IFrameworkElement> actionFrameworkElement;
-                    RETURN_IF_FAILED(actionUIElement.As(&actionFrameworkElement));
-
-                    return SetMatchingHeight(actionFrameworkElement.Get(), textBoxAsFrameworkElement.Get());
-                })
-                .Get(),
-            &eventToken));
-
-        // Wrap the action in a button
-        ComPtr<IUIElement> touchTargetUIElement;
-        WrapInTouchTarget(nullptr, actionUIElement.Get(), localInlineAction.Get(), renderContext, false, L"Adaptive.Input.Text.InlineAction", &touchTargetUIElement);
-
-        ComPtr<IFrameworkElement> touchTargetFrameworkElement;
-        THROW_IF_FAILED(touchTargetUIElement.As(&touchTargetFrameworkElement));
-
-        // Align to bottom so the icon stays with the bottom of the text box as it grows in the multiline case
-        THROW_IF_FAILED(touchTargetFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Bottom));
-
-        // Add the action to the column
-        THROW_IF_FAILED(gridStatics->SetColumn(touchTargetFrameworkElement.Get(), 2));
-        XamlHelpers::AppendXamlElementToPanel(touchTargetFrameworkElement.Get(), gridAsPanel.Get());
-
-        // If this isn't a multiline input, enter should invoke the action
-        ComPtr<IAdaptiveActionInvoker> actionInvoker;
-        THROW_IF_FAILED(renderContext->get_ActionInvoker(&actionInvoker));
-
-        boolean isMultiLine;
-        THROW_IF_FAILED(textBox->get_AcceptsReturn(&isMultiLine));
-
-        if (!isMultiLine)
-        {
-            ComPtr<IUIElement> textBoxAsUIElement;
-            THROW_IF_FAILED(localTextBox.As(&textBoxAsUIElement));
-
-            EventRegistrationToken keyDownEventToken;
-            THROW_IF_FAILED(textBoxAsUIElement->add_KeyDown(
-                Callback<IKeyEventHandler>([actionInvoker, localInlineAction](IInspectable* /*sender*/, IKeyRoutedEventArgs* args) -> HRESULT {
-                    return HandleKeydownForInlineAction(args, actionInvoker.Get(), localInlineAction.Get());
-                })
-                    .Get(),
-                &keyDownEventToken));
-        }
-
-        THROW_IF_FAILED(xamlGrid.CopyTo(textBoxWithInlineAction));
-    }
-
     bool XamlBuilder::SupportsInteractivity(_In_ IAdaptiveHostConfig* hostConfig)
     {
         boolean supportsInteractivity;
         THROW_IF_FAILED(hostConfig->get_SupportsInteractivity(&supportsInteractivity));
         return Boolify(supportsInteractivity);
-    }
-
-    void XamlBuilder::WrapInTouchTarget(_In_ IAdaptiveCardElement* adaptiveCardElement,
-                                        _In_ IUIElement* elementToWrap,
-                                        _In_ IAdaptiveActionElement* action,
-                                        _In_ IAdaptiveRenderContext* renderContext,
-                                        bool fullWidth,
-                                        const std::wstring& style,
-                                        _COM_Outptr_ IUIElement** finalElement)
-    {
-        ComPtr<IAdaptiveHostConfig> hostConfig;
-        THROW_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-
-        if (WarnForInlineShowCard(renderContext, action, L"Inline ShowCard not supported for SelectAction"))
-        {
-            // Was inline show card, so don't wrap the element and just return
-            ComPtr<IUIElement> localElementToWrap(elementToWrap);
-            localElementToWrap.CopyTo(finalElement);
-            return;
-        }
-
-        ComPtr<IButton> button =
-            XamlHelpers::CreateXamlClass<IButton>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Button));
-
-        ComPtr<IContentControl> buttonAsContentControl;
-        THROW_IF_FAILED(button.As(&buttonAsContentControl));
-        THROW_IF_FAILED(buttonAsContentControl->put_Content(elementToWrap));
-
-        ComPtr<IAdaptiveSpacingConfig> spacingConfig;
-        THROW_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
-
-        UINT32 cardPadding = 0;
-        if (fullWidth)
-        {
-            THROW_IF_FAILED(spacingConfig->get_Padding(&cardPadding));
-        }
-
-        ComPtr<IFrameworkElement> buttonAsFrameworkElement;
-        THROW_IF_FAILED(button.As(&buttonAsFrameworkElement));
-
-        // We want the hit target to equally split the vertical space above and below the current item.
-        // However, all we know is the spacing of the current item, which only applies to the spacing above.
-        // We don't know what the spacing of the NEXT element will be, so we can't calculate the correct spacing
-        // below. For now, we'll simply assume the bottom spacing is the same as the top. NOTE: Only apply spacings
-        // (padding, margin) for adaptive card elements to avoid adding spacings to card-level selectAction.
-        if (adaptiveCardElement != nullptr)
-        {
-            ABI::AdaptiveNamespace::Spacing elementSpacing;
-            THROW_IF_FAILED(adaptiveCardElement->get_Spacing(&elementSpacing));
-            UINT spacingSize;
-            THROW_IF_FAILED(GetSpacingSizeFromSpacing(hostConfig.Get(), elementSpacing, &spacingSize));
-            double topBottomPadding = spacingSize / 2.0;
-
-            // For button padding, we apply the cardPadding and topBottomPadding (and then we negate these in the margin)
-            ComPtr<IControl> buttonAsControl;
-            THROW_IF_FAILED(button.As(&buttonAsControl));
-            THROW_IF_FAILED(buttonAsControl->put_Padding({(double)cardPadding, topBottomPadding, (double)cardPadding, topBottomPadding}));
-
-            double negativeCardMargin = cardPadding * -1.0;
-            double negativeTopBottomMargin = topBottomPadding * -1.0;
-
-            THROW_IF_FAILED(buttonAsFrameworkElement->put_Margin(
-                {negativeCardMargin, negativeTopBottomMargin, negativeCardMargin, negativeTopBottomMargin}));
-        }
-
-        // Style the hit target button
-        THROW_IF_FAILED(SetStyleFromResourceDictionary(renderContext, style.c_str(), buttonAsFrameworkElement.Get()));
-
-        if (action != nullptr)
-        {
-            // If we have an action, use the title for the AutomationProperties.Name
-            HString title;
-            THROW_IF_FAILED(action->get_Title(title.GetAddressOf()));
-
-            ComPtr<IDependencyObject> buttonAsDependencyObject;
-            THROW_IF_FAILED(button.As(&buttonAsDependencyObject));
-
-            ComPtr<IAutomationPropertiesStatics> automationPropertiesStatics;
-            THROW_IF_FAILED(
-                GetActivationFactory(HStringReference(RuntimeClass_Windows_UI_Xaml_Automation_AutomationProperties).Get(),
-                                     &automationPropertiesStatics));
-
-            THROW_IF_FAILED(automationPropertiesStatics->SetName(buttonAsDependencyObject.Get(), title.Get()));
-
-            WireButtonClickToAction(button.Get(), action, renderContext);
-        }
-
-        THROW_IF_FAILED(button.CopyTo(finalElement));
     }
 
     void XamlBuilder::HandleSelectAction(_In_ IAdaptiveCardElement* adaptiveCardElement,
@@ -1488,7 +1066,7 @@ namespace AdaptiveNamespace
     {
         if (selectAction != nullptr && supportsInteractivity)
         {
-            WrapInTouchTarget(adaptiveCardElement, uiElement, selectAction, renderContext, fullWidthTouchTarget, L"Adaptive.SelectAction", outUiElement);
+            XamlHelpers::WrapInTouchTarget(adaptiveCardElement, uiElement, selectAction, renderContext, fullWidthTouchTarget, L"Adaptive.SelectAction", outUiElement);
         }
         else
         {
@@ -1503,29 +1081,6 @@ namespace AdaptiveNamespace
         }
     }
 
-    void XamlBuilder::WireButtonClickToAction(_In_ IButton* button, _In_ IAdaptiveActionElement* action, _In_ IAdaptiveRenderContext* renderContext)
-    {
-        // Note that this method currently doesn't support inline show card actions, it
-        // assumes the caller won't call this method if inline show card is specified.
-        ComPtr<IButton> localButton(button);
-        ComPtr<IAdaptiveActionInvoker> actionInvoker;
-        THROW_IF_FAILED(renderContext->get_ActionInvoker(&actionInvoker));
-        ComPtr<IAdaptiveActionElement> strongAction(action);
-
-        // Add click handler
-        ComPtr<IButtonBase> buttonBase;
-        THROW_IF_FAILED(localButton.As(&buttonBase));
-
-        EventRegistrationToken clickToken;
-        THROW_IF_FAILED(buttonBase->add_Click(Callback<IRoutedEventHandler>(
-                                                  [strongAction, actionInvoker](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
-                                                      THROW_IF_FAILED(actionInvoker->SendActionEvent(strongAction.Get()));
-                                                      return S_OK;
-                                                  })
-                                                  .Get(),
-                                              &clickToken));
-    }
-
     HRESULT XamlBuilder::AddHandledTappedEvent(_In_ IUIElement* uiElement)
     {
         if (uiElement == nullptr)
@@ -1537,8 +1092,7 @@ namespace AdaptiveNamespace
         // Add Tap handler that sets the event as handled so that it doesn't propagate to the parent containers.
         return uiElement->add_Tapped(Callback<ITappedEventHandler>([](IInspectable* /*sender*/, ITappedRoutedEventArgs* args) -> HRESULT {
                                          return args->put_Handled(TRUE);
-                                     })
-                                         .Get(),
+                                     }).Get(),
                                      &clickToken);
     }
 }

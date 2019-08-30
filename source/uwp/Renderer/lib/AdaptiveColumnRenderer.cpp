@@ -73,7 +73,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(columnPanel.As(&columnPanelAsFrameworkElement));
         RETURN_IF_FAILED(columnPanelAsFrameworkElement->put_VerticalAlignment(VerticalAlignment_Stretch));
 
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
 
         UINT32 columnMinHeight{};
         RETURN_IF_FAILED(columnAsContainerBase->get_MinHeight(&columnMinHeight));

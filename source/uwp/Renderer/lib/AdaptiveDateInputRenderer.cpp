@@ -106,7 +106,7 @@ namespace AdaptiveNamespace
         }
 
         RETURN_IF_FAILED(
-            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Date", datePickerAsFrameworkElement.Get()));
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Date", datePickerAsFrameworkElement.Get()));
 
         XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *dateInputControl);
         return S_OK;

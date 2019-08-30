@@ -72,7 +72,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(checkBox.As(&frameworkElement));
         RETURN_IF_FAILED(frameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
         RETURN_IF_FAILED(
-            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Toggle", frameworkElement.Get()));
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Toggle", frameworkElement.Get()));
 
         RETURN_IF_FAILED(checkboxAsUIElement.CopyTo(toggleInputControl));
         XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *toggleInputControl);

@@ -74,7 +74,7 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(textBox.As(&frameworkElement));
         RETURN_IF_FAILED(frameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
 
         // TODO: Handle max and min?
         RETURN_IF_FAILED(textBox.CopyTo(numberInputControl));

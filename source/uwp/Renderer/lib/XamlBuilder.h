@@ -49,16 +49,6 @@ namespace AdaptiveNamespace
                            _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
                            _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** imageControl);
 
-        static HRESULT BuildAction(_In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* adaptiveActionElement,
-                                   _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                   _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-                                   _Outptr_ ABI::Windows::UI::Xaml::IUIElement** actionControl);
-
-        template<typename T>
-        static HRESULT TryGetResourceFromResourceDictionaries(_In_ ABI::Windows::UI::Xaml::IResourceDictionary* resourceDictionary,
-                                                              std::wstring resourceName,
-                                                              _COM_Outptr_result_maybenull_ T** resource) noexcept;
-
         static HRESULT TryInsertResourceToResourceDictionaries(_In_ ABI::Windows::UI::Xaml::IResourceDictionary* resourceDictionary,
                                                                std::wstring resourceName,
                                                                _In_ IInspectable* value);
@@ -83,10 +73,6 @@ namespace AdaptiveNamespace
                                        bool supportsInteractivity,
                                        bool fullWidthTouchTarget,
                                        _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** outUiElement);
-
-        static HRESULT SetStyleFromResourceDictionary(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                                      std::wstring resourceName,
-                                                      _In_ ABI::Windows::UI::Xaml::IFrameworkElement* frameworkElement) noexcept;
 
         static bool SupportsInteractivity(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig);
 
@@ -129,29 +115,9 @@ namespace AdaptiveNamespace
                                                   _Out_ ABI::Windows::UI::Color* separatorColor,
                                                   _Out_ bool* needsSeparator);
 
-        static Microsoft::WRL::ComPtr<ABI::Windows::UI::Xaml::IUIElement> CreateSeparator(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                                                                          UINT spacing,
-                                                                                          UINT separatorThickness,
-                                                                                          ABI::Windows::UI::Color separatorColor,
-                                                                                          bool isHorizontal = true);
-
         static void AddInputValueToContext(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                            _In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
                                            _In_ ABI::Windows::UI::Xaml::IUIElement* inputUiElement);
-
-        static void HandleInlineAcion(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                      _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-                                      _In_ ABI::Windows::UI::Xaml::Controls::ITextBox* textBox,
-                                      _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* inlineAction,
-                                      _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** textBoxWithInlineAction);
-
-        static void WrapInTouchTarget(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
-                                      _In_ ABI::Windows::UI::Xaml::IUIElement* elementToWrap,
-                                      _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                                      _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                      bool fullWidth,
-                                      const std::wstring& style,
-                                      _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** finalElement);
 
         static inline HRESULT WarnFallbackString(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                                  const std::string& warning)
@@ -237,14 +203,6 @@ namespace AdaptiveNamespace
         void FireAllImagesLoaded();
         void FireImagesLoadingHadError();
 
-        static void ArrangeButtonContent(_In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                                         _In_ ABI::AdaptiveNamespace::IAdaptiveActionsConfig* actionsConfig,
-                                         _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                                         ABI::AdaptiveNamespace::ContainerStyle containerStyle,
-                                         _In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig,
-                                         bool allActionsHaveIcons,
-                                         _In_ ABI::Windows::UI::Xaml::Controls::IButton* button);
-
         static HRESULT BuildActions(_In_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
                                     _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::IAdaptiveActionElement*>* children,
                                     _In_ ABI::Windows::UI::Xaml::Controls::IPanel* bodyPanel,
@@ -259,20 +217,9 @@ namespace AdaptiveNamespace
                                          _In_ ABI::Windows::UI::Xaml::Controls::IPanel* parentPanel,
                                          _Outptr_ ABI::Windows::UI::Xaml::IUIElement** addedSeparator);
 
-        static void WireButtonClickToAction(_In_ ABI::Windows::UI::Xaml::Controls::IButton* button,
-                                            _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                                            _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext);
-
         static HRESULT SetAutoImageSize(_In_ ABI::Windows::UI::Xaml::IFrameworkElement* imageControl,
                                         _In_ IInspectable* parentElement,
                                         _In_ ABI::Windows::UI::Xaml::Media::Imaging::IBitmapSource* imageSource,
                                         bool setVisible);
-
-        static HRESULT SetMatchingHeight(_In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToChange,
-                                         _In_ ABI::Windows::UI::Xaml::IFrameworkElement* elementToMatch);
-
-        static HRESULT HandleActionStyling(_In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* adaptiveActionElement,
-                                           _In_ ABI::Windows::UI::Xaml::IFrameworkElement* buttonFrameworkElement,
-                                           _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext);
     };
 }

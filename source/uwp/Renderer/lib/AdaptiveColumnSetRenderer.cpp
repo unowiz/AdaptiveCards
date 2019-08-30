@@ -135,7 +135,7 @@ namespace AdaptiveNamespace
                         RETURN_IF_FAILED(separatorColumnDefinition->put_Width({1.0, GridUnitType::GridUnitType_Auto}));
                         RETURN_IF_FAILED(columnDefinitions->Append(separatorColumnDefinition.Get()));
 
-                        separator = XamlBuilder::CreateSeparator(renderContext, spacing, separatorThickness, separatorColor, false);
+                        separator = XamlHelpers::CreateSeparator(renderContext, spacing, separatorThickness, separatorColor, false);
                         ComPtr<IFrameworkElement> separatorAsFrameworkElement;
                         RETURN_IF_FAILED(separator.As(&separatorAsFrameworkElement));
                         gridStatics->SetColumn(separatorAsFrameworkElement.Get(), currentColumn++);
@@ -175,7 +175,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> columnSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&columnSetAsFrameworkElement));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                      L"Adaptive.ColumnSet",
                                                                      columnSetAsFrameworkElement.Get()));
         RETURN_IF_FAILED(columnSetAsFrameworkElement->put_VerticalAlignment(VerticalAlignment_Stretch));

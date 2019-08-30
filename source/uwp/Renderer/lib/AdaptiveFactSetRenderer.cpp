@@ -121,10 +121,10 @@ namespace AdaptiveNamespace
                 // Add spacing from hostconfig to right margin of title.
                 titleTextBlockAsFrameWorkElement->put_Margin({0, 0, (double)spacing, 0});
 
-                RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                              L"Adaptive.Fact.Title",
                                                                              titleTextBlockAsFrameWorkElement.Get()));
-                RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext,
+                RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                                              L"Adaptive.Fact.Value",
                                                                              valueTextBlockAsFrameWorkElement.Get()));
 
@@ -150,7 +150,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> factSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&factSetAsFrameworkElement));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.FactSet", factSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.FactSet", factSetAsFrameworkElement.Get()));
 
         return xamlGrid.CopyTo(factSetControl);
     }

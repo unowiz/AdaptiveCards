@@ -5,6 +5,7 @@
 #include "AdaptiveElementParserRegistration.h"
 #include "AdaptiveTextInput.h"
 #include "AdaptiveTextInputRenderer.h"
+#include "ActionHelpers.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
@@ -101,12 +102,12 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> textBoxAsFrameworkElement;
         RETURN_IF_FAILED(textBox.As(&textBoxAsFrameworkElement));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Text", textBoxAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Text", textBoxAsFrameworkElement.Get()));
 
         if (inlineAction != nullptr)
         {
             ComPtr<IUIElement> textBoxWithInlineAction;
-            XamlBuilder::HandleInlineAcion(renderContext, renderArgs, textBox.Get(), inlineAction.Get(), &textBoxWithInlineAction);
+            ActionHelpers::HandleInlineAction(renderContext, renderArgs, textBox.Get(), inlineAction.Get(), &textBoxWithInlineAction);
             if (!isMultiLine)
             {
                 RETURN_IF_FAILED(textBoxWithInlineAction.As(&textBoxAsFrameworkElement));

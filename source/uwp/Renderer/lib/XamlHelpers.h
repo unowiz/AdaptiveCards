@@ -28,8 +28,72 @@ namespace AdaptiveNamespace::XamlHelpers
         return solidColorBrushAsBrush;
     }
 
+    void WireButtonClickToAction(_In_ ABI::Windows::UI::Xaml::Controls::IButton* button,
+                                 _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                                 _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext);
+
+    HRESULT SetStyleFromResourceDictionary(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                           std::wstring resourceName,
+                                           _In_ ABI::Windows::UI::Xaml::IFrameworkElement* frameworkElement) noexcept;
+
+    void WrapInTouchTarget(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
+                           _In_ ABI::Windows::UI::Xaml::IUIElement* elementToWrap,
+                           _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                           _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                           bool fullWidth,
+                           const std::wstring& style,
+                           _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** finalElement);
+
+    Microsoft::WRL::ComPtr<ABI::Windows::UI::Xaml::IUIElement> CreateSeparator(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                                               UINT spacing,
+                                                                               UINT separatorThickness,
+                                                                               ABI::Windows::UI::Color separatorColor,
+                                                                               bool isHorizontal = true);
+
+    template<typename T>
+    HRESULT TryGetResourceFromResourceDictionaries(_In_ ABI::Windows::UI::Xaml::IResourceDictionary* resourceDictionary,
+                                                   const std::wstring& resourceName,
+                                                   _COM_Outptr_result_maybenull_ T** style) noexcept
+    {
+        if (resourceDictionary == nullptr)
+        {
+            return E_INVALIDARG;
+        }
+
+        *style = nullptr;
+
+        // Get a resource key for the requested style that we can use for ResourceDictionary Lookups
+        ComPtr<IPropertyValueStatics> propertyValueStatics;
+        RETURN_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Foundation_PropertyValue).Get(),
+                                              &propertyValueStatics));
+
+        ComPtr<IInspectable> resourceKey;
+        RETURN_IF_FAILED(propertyValueStatics->CreateString(HStringReference(resourceName.c_str()).Get(), resourceKey.GetAddressOf()));
+
+        // Search for the named resource
+        ComPtr<IResourceDictionary> strongDictionary = resourceDictionary;
+        ComPtr<IMap<IInspectable*, IInspectable*>> resourceDictionaryMap;
+
+        boolean hasKey{};
+        RETURN_IF_FAILED(strongDictionary.As(&resourceDictionaryMap));
+        RETURN_IF_FAILED(resourceDictionaryMap->HasKey(resourceKey.Get(), &hasKey));
+        if (hasKey)
+        {
+            ComPtr<IInspectable> dictionaryValue;
+            RETURN_IF_FAILED(resourceDictionaryMap->Lookup(resourceKey.Get(), dictionaryValue.GetAddressOf()));
+
+            ComPtr<T> resourceToReturn;
+            RETURN_IF_FAILED(dictionaryValue.As(&resourceToReturn));
+            RETURN_IF_FAILED(resourceToReturn.CopyTo(style));
+        }
+
+        return E_FAIL;
+    }
+
     template<typename T, typename TInterface, typename C>
-    HRESULT IterateOverVectorWithFailure(_In_ ABI::Windows::Foundation::Collections::IVector<T*>* vector, const boolean stopOnFailure, C iterationCallback)
+    HRESULT IterateOverVectorWithFailure(_In_ ABI::Windows::Foundation::Collections::IVector<T*>* vector,
+                                         const boolean stopOnFailure,
+                                         C iterationCallback)
     {
         Microsoft::WRL::ComPtr<ABI::Windows::Foundation::Collections::IVector<T*>> localVector(vector);
         ComPtr<IIterable<T*>> vectorIterable;
@@ -64,7 +128,9 @@ namespace AdaptiveNamespace::XamlHelpers
     }
 
     template<typename T, typename C>
-    HRESULT IterateOverVectorWithFailure(_In_ ABI::Windows::Foundation::Collections::IVector<T*>* vector, const boolean stopOnFailure, C iterationCallback)
+    HRESULT IterateOverVectorWithFailure(_In_ ABI::Windows::Foundation::Collections::IVector<T*>* vector,
+                                         const boolean stopOnFailure,
+                                         C iterationCallback)
     {
         return IterateOverVectorWithFailure<T, T, C>(vector, stopOnFailure, iterationCallback);
     }

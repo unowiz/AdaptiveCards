@@ -100,7 +100,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IFrameworkElement> imageSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&imageSetAsFrameworkElement));
-        RETURN_IF_FAILED(XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.ImageSet", imageSetAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.ImageSet", imageSetAsFrameworkElement.Get()));
 
         return xamlGrid.CopyTo(imageSetControl);
     }

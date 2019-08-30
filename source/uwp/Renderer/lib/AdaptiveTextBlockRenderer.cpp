@@ -55,7 +55,7 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(xamlTextBlock.As(&frameworkElement));
         RETURN_IF_FAILED(
-            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.TextBlock", frameworkElement.Get()));
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.TextBlock", frameworkElement.Get()));
 
         return xamlTextBlock.CopyTo(textBlockControl);
     }

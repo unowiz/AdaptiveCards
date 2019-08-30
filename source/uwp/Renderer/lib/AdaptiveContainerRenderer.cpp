@@ -114,7 +114,7 @@ namespace AdaptiveNamespace
         }
 
         RETURN_IF_FAILED(
-            XamlBuilder::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Container", containerPanelAsFrameWorkElement.Get()));
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Container", containerPanelAsFrameWorkElement.Get()));
 
         ComPtr<IAdaptiveActionElement> selectAction;
         RETURN_IF_FAILED(containerAsContainerBase->get_SelectAction(&selectAction));
