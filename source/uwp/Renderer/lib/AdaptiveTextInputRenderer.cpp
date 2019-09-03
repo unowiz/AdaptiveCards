@@ -31,7 +31,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -95,14 +95,15 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> textBoxAsUIElement;
         textBox.As(&textBoxAsUIElement);
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, textBoxAsUIElement.Get());
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, textBoxAsUIElement.Get());
 
         ComPtr<IAdaptiveActionElement> inlineAction;
         RETURN_IF_FAILED(adaptiveTextInput->get_InlineAction(&inlineAction));
 
         ComPtr<IFrameworkElement> textBoxAsFrameworkElement;
         RETURN_IF_FAILED(textBox.As(&textBoxAsFrameworkElement));
-        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Text", textBoxAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Text", textBoxAsFrameworkElement.Get()));
 
         if (inlineAction != nullptr)
         {

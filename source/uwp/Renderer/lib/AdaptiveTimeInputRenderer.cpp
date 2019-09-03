@@ -29,7 +29,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -46,8 +46,9 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(timePickerAsFrameworkElement->put_HorizontalAlignment(ABI::Windows::UI::Xaml::HorizontalAlignment_Stretch));
         RETURN_IF_FAILED(timePickerAsFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
 
-        RETURN_IF_FAILED(
-            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Time", timePickerAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
+                                                                     L"Adaptive.Input.Time",
+                                                                     timePickerAsFrameworkElement.Get()));
 
         ComPtr<IAdaptiveCardElement> cardElement(adaptiveCardElement);
         ComPtr<IAdaptiveTimeInput> adaptiveTimeInput;
@@ -67,7 +68,7 @@ namespace AdaptiveNamespace
         // Note: Placeholder text and min/max are not supported by ITimePicker
 
         RETURN_IF_FAILED(timePicker.CopyTo(timeInputControl));
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *timeInputControl);
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, *timeInputControl);
         return S_OK;
     }
     CATCH_RETURN;

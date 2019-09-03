@@ -30,7 +30,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -66,7 +66,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> checkboxAsUIElement;
         RETURN_IF_FAILED(checkBox.As(&checkboxAsUIElement));
-        RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(checkboxAsUIElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::AddHandledTappedEvent(checkboxAsUIElement.Get()));
 
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(checkBox.As(&frameworkElement));
@@ -75,7 +75,7 @@ namespace AdaptiveNamespace
             XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Toggle", frameworkElement.Get()));
 
         RETURN_IF_FAILED(checkboxAsUIElement.CopyTo(toggleInputControl));
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *toggleInputControl);
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, *toggleInputControl);
         return S_OK;
     }
     CATCH_RETURN;

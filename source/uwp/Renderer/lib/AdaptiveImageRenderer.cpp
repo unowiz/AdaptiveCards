@@ -2,9 +2,10 @@
 // Licensed under the MIT License.
 #include "pch.h"
 
+#include "AdaptiveImageRenderer.h"
+
 #include "AdaptiveElementParserRegistration.h"
 #include "AdaptiveImage.h"
-#include "AdaptiveImageRenderer.h"
 #include "AdaptiveBase64Util.h"
 #include "AdaptiveCardGetResourceStreamArgs.h"
 #include <robuffer.h>
@@ -37,9 +38,7 @@ namespace AdaptiveNamespace
 {
     AdaptiveImageRenderer::AdaptiveImageRenderer() {}
 
-    AdaptiveImageRenderer::AdaptiveImageRenderer(ComPtr<XamlBuilder> xamlBuilder) : m_xamlBuilder(xamlBuilder)
-    {
-    }
+    AdaptiveImageRenderer::AdaptiveImageRenderer(ComPtr<XamlBuilder> xamlBuilder) : m_xamlBuilder(xamlBuilder) {}
 
     HRESULT AdaptiveImageRenderer::RuntimeClassInitialize() noexcept try
     {
@@ -352,18 +351,18 @@ namespace AdaptiveNamespace
 
         RETURN_IF_FAILED(automationPropertiesStatics->SetName(imageAsDependencyObject.Get(), altText.Get()));
 
-        HandleSelectAction(adaptiveCardElement,
-                           selectAction.Get(),
-                           renderContext,
-                           imageAsUIElement.Get(),
-                           SupportsInteractivity(hostConfig.Get()),
-                           true,
-                           imageControl);
+        XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                        selectAction.Get(),
+                                        renderContext,
+                                        imageAsUIElement.Get(),
+                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                        true,
+                                        imageControl);
 
         return S_OK;
     }
 
-template<typename T>
+    template<typename T>
     void XamlBuilder::SetImageOnUIElement(_In_ ABI::Windows::Foundation::IUriRuntimeClass* imageUrl,
                                           _In_ T* uiElement,
                                           _In_opt_ IAdaptiveCardResourceResolvers* resolvers,
@@ -551,7 +550,7 @@ template<typename T>
         }
     }
 
-template<typename T>
+    template<typename T>
     void XamlBuilder::PopulateImageFromUrlAsync(_In_ IUriRuntimeClass* imageUrl, _In_ T* imageControl)
     {
         // Create the HttpClient to load the image stream
@@ -671,8 +670,8 @@ template<typename T>
             ComPtr<IUIElement> ellipseAsUIElement;
             THROW_IF_FAILED(ellipse.As(&ellipseAsUIElement));
 
-            ComPtr<IFrameworkElement> ellipsAsFrameworkElement;
-            THROW_IF_FAILED(ellipse.As(&ellipsAsFrameworkElement));
+            ComPtr<IFrameworkElement> ellipseAsFrameworkElement;
+            THROW_IF_FAILED(ellipse.As(&ellipseAsFrameworkElement));
 
             ComPtr<IImageSource> imageSource;
             THROW_IF_FAILED(brushAsImageBrush->get_ImageSource(&imageSource));
@@ -688,23 +687,23 @@ template<typename T>
                 EventRegistrationToken eventToken;
                 ComPtr<IInspectable> strongParentElement(parentElement);
                 THROW_IF_FAILED(brushAsImageBrush->add_ImageOpened(
-                    Callback<IRoutedEventHandler>([ellipseAsUIElement, ellipsAsFrameworkElement, imageSourceAsBitmap, strongParentElement, isVisible](IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
+                    Callback<IRoutedEventHandler>([ellipseAsUIElement, ellipseAsFrameworkElement, imageSourceAsBitmap, strongParentElement, isVisible](
+                                                      IInspectable* /*sender*/, IRoutedEventArgs * /*args*/) -> HRESULT {
                         if (isVisible)
                         {
                             RETURN_IF_FAILED(ellipseAsUIElement->put_Visibility(Visibility::Visibility_Visible));
-                            RETURN_IF_FAILED(SetAutoImageSize(ellipsAsFrameworkElement.Get(),
-                                                    strongParentElement.Get(),
-                                                    imageSourceAsBitmap.Get(),
-                                                    isVisible));
+                            RETURN_IF_FAILED(XamlHelpers::SetAutoImageSize(ellipseAsFrameworkElement.Get(),
+                                                                           strongParentElement.Get(),
+                                                                           imageSourceAsBitmap.Get(),
+                                                                           isVisible));
                         }
                         return S_OK;
-                    })
-                        .Get(),
+                    }).Get(),
                     &eventToken));
             }
             else
             {
-                SetAutoImageSize(ellipsAsFrameworkElement.Get(), parentElement, imageSourceAsBitmap.Get(), isVisible);
+                XamlHelpers::SetAutoImageSize(ellipseAsFrameworkElement.Get(), parentElement, imageSourceAsBitmap.Get(), isVisible);
             }
         }
     }
@@ -735,20 +734,19 @@ template<typename T>
                 ComPtr<IInspectable> strongParentElement(parentElement);
                 EventRegistrationToken eventToken;
                 THROW_IF_FAILED(xamlImage->add_ImageOpened(
-                    Callback<IRoutedEventHandler>(
-                        [imageAsFrameworkElement, strongParentElement, imageSourceAsBitmap, isVisible](IInspectable* /*sender*/, IRoutedEventArgs *
-                                                                                                       /*args*/) -> HRESULT {
-                            return SetAutoImageSize(imageAsFrameworkElement.Get(),
-                                                    strongParentElement.Get(),
-                                                    imageSourceAsBitmap.Get(),
-                                                    isVisible);
-                        })
-                        .Get(),
+                    Callback<IRoutedEventHandler>([imageAsFrameworkElement, strongParentElement, imageSourceAsBitmap, isVisible](
+                                                      IInspectable* /*sender*/, IRoutedEventArgs *
+                                                      /*args*/) -> HRESULT {
+                        return XamlHelpers::SetAutoImageSize(imageAsFrameworkElement.Get(),
+                                                             strongParentElement.Get(),
+                                                             imageSourceAsBitmap.Get(),
+                                                             isVisible);
+                    }).Get(),
                     &eventToken));
             }
             else
             {
-                SetAutoImageSize(imageAsFrameworkElement.Get(), parentElement, imageSourceAsBitmap.Get(), isVisible);
+                XamlHelpers::SetAutoImageSize(imageAsFrameworkElement.Get(), parentElement, imageSourceAsBitmap.Get(), isVisible);
             }
         }
     }

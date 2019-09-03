@@ -47,7 +47,7 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(adaptiveColumnSet.As(&columnSetAsContainerBase));
 
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        RETURN_IF_FAILED(XamlBuilder::HandleStylingAndPadding(
+        RETURN_IF_FAILED(XamlHelpers::HandleStylingAndPadding(
             columnSetAsContainerBase.Get(), columnSetBorder.Get(), renderContext, renderArgs, &containerStyle));
 
         ComPtr<IFrameworkElement> parentElement;
@@ -107,7 +107,7 @@ namespace AdaptiveNamespace
             HRESULT hr = columnRenderer->Render(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn);
             if (hr == E_PERFORM_FALLBACK)
             {
-                RETURN_IF_FAILED(XamlBuilder::RenderFallback(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn));
+                RETURN_IF_FAILED(XamlHelpers::RenderFallback(columnAsCardElement.Get(), renderContext, newRenderArgs.Get(), &xamlColumn));
             }
 
             RETURN_IF_FAILED(newRenderArgs->put_AncestorHasFallback(ancestorHasFallback));
@@ -124,7 +124,7 @@ namespace AdaptiveNamespace
                     UINT spacing;
                     UINT separatorThickness;
                     ABI::Windows::UI::Color separatorColor;
-                    XamlBuilder::GetSeparationConfigForElement(
+                    XamlHelpers::GetSeparationConfigForElement(
                         columnAsCardElement.Get(), hostConfig.Get(), &spacing, &separatorThickness, &separatorColor, &needsSeparator);
 
                     if (needsSeparator)
@@ -150,7 +150,7 @@ namespace AdaptiveNamespace
                 boolean isVisible;
                 RETURN_IF_FAILED(columnAsCardElement->get_IsVisible(&isVisible));
 
-                RETURN_IF_FAILED(XamlBuilder::HandleColumnWidth(column, isVisible, columnDefinition.Get()));
+                RETURN_IF_FAILED(XamlHelpers::HandleColumnWidth(column, isVisible, columnDefinition.Get()));
 
                 RETURN_IF_FAILED(columnDefinitions->Append(columnDefinition.Get()));
 
@@ -160,7 +160,7 @@ namespace AdaptiveNamespace
                 gridStatics->SetColumn(columnAsFrameworkElement.Get(), currentColumn++);
 
                 // Finally add the column container to the grid
-                RETURN_IF_FAILED(XamlBuilder::AddRenderedControl(xamlColumn.Get(),
+                RETURN_IF_FAILED(XamlHelpers::AddRenderedControl(xamlColumn.Get(),
                                                                  columnAsCardElement.Get(),
                                                                  gridAsPanel.Get(),
                                                                  separator.Get(),
@@ -171,7 +171,7 @@ namespace AdaptiveNamespace
         });
         RETURN_IF_FAILED(hrColumns);
 
-        RETURN_IF_FAILED(XamlBuilder::SetSeparatorVisibility(gridAsPanel.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetSeparatorVisibility(gridAsPanel.Get()));
 
         ComPtr<IFrameworkElement> columnSetAsFrameworkElement;
         RETURN_IF_FAILED(xamlGrid.As(&columnSetAsFrameworkElement));
@@ -213,67 +213,16 @@ namespace AdaptiveNamespace
         ComPtr<IUIElement> columnSetBorderAsUIElement;
         RETURN_IF_FAILED(columnSetBorder.As(&columnSetBorderAsUIElement));
 
-        XamlBuilder::HandleSelectAction(adaptiveCardElement,
+        XamlHelpers::HandleSelectAction(adaptiveCardElement,
                                         selectAction.Get(),
                                         renderContext,
                                         columnSetBorderAsUIElement.Get(),
-                                        XamlBuilder::SupportsInteractivity(hostConfig.Get()),
+                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
                                         true,
                                         columnSetControl);
         return S_OK;
     }
     CATCH_RETURN;
-
-    HRESULT XamlBuilder::HandleColumnWidth(_In_ IAdaptiveColumn* column, boolean isVisible, _In_ IColumnDefinition* columnDefinition)
-    {
-        HString adaptiveColumnWidth;
-        RETURN_IF_FAILED(column->get_Width(adaptiveColumnWidth.GetAddressOf()));
-
-        INT32 isStretchResult;
-        RETURN_IF_FAILED(WindowsCompareStringOrdinal(adaptiveColumnWidth.Get(), HStringReference(L"stretch").Get(), &isStretchResult));
-        const boolean isStretch = (isStretchResult == 0);
-
-        INT32 isAutoResult;
-        RETURN_IF_FAILED(WindowsCompareStringOrdinal(adaptiveColumnWidth.Get(), HStringReference(L"auto").Get(), &isAutoResult));
-        const boolean isAuto = (isAutoResult == 0);
-
-        double widthAsDouble = _wtof(adaptiveColumnWidth.GetRawBuffer(nullptr));
-        UINT32 pixelWidth = 0;
-        RETURN_IF_FAILED(column->get_PixelWidth(&pixelWidth));
-
-        // Valid widths are "auto", "stretch", a pixel width ("50px"), unset, or a value greater than 0 to use as a star value ("2")
-        const boolean isValidWidth = isAuto || isStretch || pixelWidth || !adaptiveColumnWidth.IsValid() || (widthAsDouble > 0);
-
-        GridLength columnWidth;
-        if (!isVisible || isAuto || !isValidWidth)
-        {
-            // If the column isn't visible, or is set to "auto" or an invalid value ("-1", "foo"), set it to Auto
-            columnWidth.GridUnitType = GridUnitType::GridUnitType_Auto;
-            columnWidth.Value = 0;
-        }
-        else if (pixelWidth)
-        {
-            // If it's visible and pixel width is specified, use pixel width
-            columnWidth.GridUnitType = GridUnitType::GridUnitType_Pixel;
-            columnWidth.Value = pixelWidth;
-        }
-        else if (isStretch || !adaptiveColumnWidth.IsValid())
-        {
-            // If it's visible and stretch is specified, or width is unset, use stretch with default of 1
-            columnWidth.GridUnitType = GridUnitType::GridUnitType_Star;
-            columnWidth.Value = 1;
-        }
-        else
-        {
-            // If it's visible and the user specified a valid non-pixel width, use that as a star width
-            columnWidth.GridUnitType = GridUnitType::GridUnitType_Star;
-            columnWidth.Value = _wtof(adaptiveColumnWidth.GetRawBuffer(nullptr));
-        }
-
-        RETURN_IF_FAILED(columnDefinition->put_Width(columnWidth));
-
-        return S_OK;
-    }
 
     HRESULT AdaptiveColumnSetRenderer::FromJson(
         _In_ ABI::Windows::Data::Json::IJsonObject* jsonObject,

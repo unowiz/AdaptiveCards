@@ -29,7 +29,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -105,10 +105,11 @@ namespace AdaptiveNamespace
             }
         }
 
-        RETURN_IF_FAILED(
-            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Date", datePickerAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
+                                                                     L"Adaptive.Input.Date",
+                                                                     datePickerAsFrameworkElement.Get()));
 
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *dateInputControl);
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, *dateInputControl);
         return S_OK;
     }
     CATCH_RETURN;

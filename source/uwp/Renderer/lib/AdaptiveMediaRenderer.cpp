@@ -42,7 +42,7 @@ namespace AdaptiveNamespace
         GetMediaPosterAsImage(renderContext, renderArgs, adaptiveMedia.Get(), &posterImage);
 
         // If the host doesn't support interactivity we're done here, just return the poster image
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
                                       HStringReference(L"Media was present in card, but interactivity is not supported").Get());

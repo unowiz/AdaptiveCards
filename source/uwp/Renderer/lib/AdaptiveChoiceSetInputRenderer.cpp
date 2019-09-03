@@ -17,8 +17,7 @@ using namespace ABI::Windows::UI::Xaml::Controls::Primitives;
 
 namespace AdaptiveNamespace
 {
-    HRESULT AdaptiveChoiceSetInputRenderer::RuntimeClassInitialize() noexcept
-    try
+    HRESULT AdaptiveChoiceSetInputRenderer::RuntimeClassInitialize() noexcept try
     {
         return S_OK;
     }
@@ -31,7 +30,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -58,7 +57,7 @@ namespace AdaptiveNamespace
             _BuildExpandedChoiceSetInput(renderContext, adaptiveChoiceSetInput.Get(), isMultiSelect, choiceInputSet);
         }
 
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *choiceInputSet);
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, *choiceInputSet);
         return S_OK;
     }
     CATCH_RETURN;
@@ -162,7 +161,7 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> comboBoxAsUIElement;
         RETURN_IF_FAILED(comboBox.As(&comboBoxAsUIElement));
-        RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(comboBoxAsUIElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::AddHandledTappedEvent(comboBoxAsUIElement.Get()));
 
         XamlHelpers::SetStyleFromResourceDictionary(renderContext,
                                                     L"Adaptive.Input.ChoiceSet.Compact",
@@ -232,7 +231,7 @@ namespace AdaptiveNamespace
                 RETURN_IF_FAILED(adaptiveChoiceInput->get_Title(title.GetAddressOf()));
                 XamlHelpers::SetContent(choiceItem.Get(), title.Get(), wrap);
 
-                RETURN_IF_FAILED(XamlBuilder::AddHandledTappedEvent(choiceItem.Get()));
+                RETURN_IF_FAILED(XamlHelpers::AddHandledTappedEvent(choiceItem.Get()));
 
                 XamlHelpers::AppendXamlElementToPanel(choiceItem.Get(), panel.Get());
                 return S_OK;

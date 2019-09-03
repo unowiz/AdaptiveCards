@@ -17,8 +17,7 @@ using namespace ABI::Windows::UI::Xaml::Input;
 
 namespace AdaptiveNamespace
 {
-    HRESULT AdaptiveNumberInputRenderer::RuntimeClassInitialize() noexcept
-    try
+    HRESULT AdaptiveNumberInputRenderer::RuntimeClassInitialize() noexcept try
     {
         return S_OK;
     }
@@ -31,7 +30,7 @@ namespace AdaptiveNamespace
     {
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
-        if (!XamlBuilder::SupportsInteractivity(hostConfig.Get()))
+        if (!XamlHelpers::SupportsInteractivity(hostConfig.Get()))
         {
             renderContext->AddWarning(
                 ABI::AdaptiveNamespace::WarningStatusCode::InteractivityNotSupported,
@@ -74,11 +73,12 @@ namespace AdaptiveNamespace
         ComPtr<IFrameworkElement> frameworkElement;
         RETURN_IF_FAILED(textBox.As(&frameworkElement));
         RETURN_IF_FAILED(frameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment_Top));
-        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
+        RETURN_IF_FAILED(
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Input.Number", frameworkElement.Get()));
 
         // TODO: Handle max and min?
         RETURN_IF_FAILED(textBox.CopyTo(numberInputControl));
-        XamlBuilder::AddInputValueToContext(renderContext, adaptiveCardElement, *numberInputControl);
+        XamlHelpers::AddInputValueToContext(renderContext, adaptiveCardElement, *numberInputControl);
 
         return S_OK;
     }
@@ -89,8 +89,7 @@ namespace AdaptiveNamespace
         _In_ ABI::AdaptiveNamespace::IAdaptiveElementParserRegistration* elementParserRegistration,
         _In_ ABI::AdaptiveNamespace::IAdaptiveActionParserRegistration* actionParserRegistration,
         _In_ ABI::Windows::Foundation::Collections::IVector<ABI::AdaptiveNamespace::AdaptiveWarning*>* adaptiveWarnings,
-        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept
-    try
+        _COM_Outptr_ ABI::AdaptiveNamespace::IAdaptiveCardElement** element) noexcept try
     {
         return AdaptiveNamespace::FromJson<AdaptiveNamespace::AdaptiveNumberInput, AdaptiveSharedNamespace::NumberInput, AdaptiveSharedNamespace::NumberInputParser>(
             jsonObject, elementParserRegistration, actionParserRegistration, adaptiveWarnings, element);

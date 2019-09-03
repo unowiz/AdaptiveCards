@@ -47,7 +47,8 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(adaptiveColumn.As(&columnAsContainerBase));
 
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        RETURN_IF_FAILED(XamlBuilder::HandleStylingAndPadding(columnAsContainerBase.Get(), columnBorder.Get(), renderContext, renderArgs, &containerStyle));
+        RETURN_IF_FAILED(
+            XamlHelpers::HandleStylingAndPadding(columnAsContainerBase.Get(), columnBorder.Get(), renderContext, renderArgs, &containerStyle));
 
         ComPtr<IFrameworkElement> parentElement;
         RETURN_IF_FAILED(renderArgs->get_ParentElement(&parentElement));
@@ -65,7 +66,7 @@ namespace AdaptiveNamespace
         ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment;
         RETURN_IF_FAILED(adaptiveColumn->get_VerticalContentAlignment(&verticalContentAlignment));
 
-        XamlBuilder::SetVerticalContentAlignmentToChildren(columnPanel.Get(), verticalContentAlignment);
+        XamlHelpers::SetVerticalContentAlignmentToChildren(columnPanel.Get(), verticalContentAlignment);
 
         // Assign vertical alignment to the top so that on fixed height cards, the content
         // still renders at the top even if the content is shorter than the full card
@@ -73,7 +74,8 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(columnPanel.As(&columnPanelAsFrameworkElement));
         RETURN_IF_FAILED(columnPanelAsFrameworkElement->put_VerticalAlignment(VerticalAlignment_Stretch));
 
-        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
+        RETURN_IF_FAILED(
+            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Column", columnPanelAsFrameworkElement.Get()));
 
         UINT32 columnMinHeight{};
         RETURN_IF_FAILED(columnAsContainerBase->get_MinHeight(&columnMinHeight));
@@ -98,7 +100,7 @@ namespace AdaptiveNamespace
             ComPtr<IPanel> rootAsPanel;
             RETURN_IF_FAILED(rootElement.As(&rootAsPanel));
 
-            XamlBuilder::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
+            XamlHelpers::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
 
             // get HeightType for column
             ABI::AdaptiveNamespace::HeightType columnHeightType{};
@@ -119,13 +121,13 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
 
-        XamlBuilder::HandleSelectAction(adaptiveCardElement,
-                           selectAction.Get(),
-                           renderContext,
-                           columnAsUIElement.Get(),
-                           XamlBuilder::SupportsInteractivity(hostConfig.Get()),
-                           false,
-                           ColumnControl);
+        XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                        selectAction.Get(),
+                                        renderContext,
+                                        columnAsUIElement.Get(),
+                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                        false,
+                                        ColumnControl);
         return S_OK;
     }
     CATCH_RETURN;

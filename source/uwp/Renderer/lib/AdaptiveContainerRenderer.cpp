@@ -61,8 +61,8 @@ namespace AdaptiveNamespace
             XamlHelpers::CreateXamlClass<IBorder>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Border));
 
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        RETURN_IF_FAILED(
-            XamlBuilder::HandleStylingAndPadding(containerAsContainerBase.Get(), containerBorder.Get(), renderContext, renderArgs, &containerStyle));
+        RETURN_IF_FAILED(XamlHelpers::HandleStylingAndPadding(
+            containerAsContainerBase.Get(), containerBorder.Get(), renderContext, renderArgs, &containerStyle));
 
         ComPtr<IFrameworkElement> parentElement;
         RETURN_IF_FAILED(renderArgs->get_ParentElement(&parentElement));
@@ -73,13 +73,13 @@ namespace AdaptiveNamespace
         RETURN_IF_FAILED(containerPanel.As(&containerPanelAsPanel));
         ComPtr<IVector<IAdaptiveCardElement*>> childItems;
         RETURN_IF_FAILED(adaptiveContainer->get_Items(&childItems));
-        RETURN_IF_FAILED(
-            XamlBuilder::BuildPanelChildren(childItems.Get(), containerPanelAsPanel.Get(), renderContext, newRenderArgs.Get(), [](IUIElement*) {}));
+        RETURN_IF_FAILED(XamlBuilder::BuildPanelChildren(
+            childItems.Get(), containerPanelAsPanel.Get(), renderContext, newRenderArgs.Get(), [](IUIElement*) {}));
 
         ABI::AdaptiveNamespace::VerticalContentAlignment verticalContentAlignment;
         RETURN_IF_FAILED(adaptiveContainer->get_VerticalContentAlignment(&verticalContentAlignment));
 
-        XamlBuilder::SetVerticalContentAlignmentToChildren(containerPanel.Get(), verticalContentAlignment);
+        XamlHelpers::SetVerticalContentAlignmentToChildren(containerPanel.Get(), verticalContentAlignment);
 
         // Check if backgroundImage defined
         ComPtr<IAdaptiveBackgroundImage> backgroundImage;
@@ -93,7 +93,7 @@ namespace AdaptiveNamespace
             ComPtr<IPanel> rootAsPanel;
             RETURN_IF_FAILED(rootElement.As(&rootAsPanel));
 
-            XamlBuilder::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
+            XamlHelpers::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, newRenderArgs.Get());
 
             // Add rootElement to containerBorder
             ComPtr<IUIElement> rootAsUIElement;
@@ -113,8 +113,9 @@ namespace AdaptiveNamespace
             RETURN_IF_FAILED(containerBorder->put_Child(containerPanelAsUIElement.Get()));
         }
 
-        RETURN_IF_FAILED(
-            XamlHelpers::SetStyleFromResourceDictionary(renderContext, L"Adaptive.Container", containerPanelAsFrameWorkElement.Get()));
+        RETURN_IF_FAILED(XamlHelpers::SetStyleFromResourceDictionary(renderContext,
+                                                                     L"Adaptive.Container",
+                                                                     containerPanelAsFrameWorkElement.Get()));
 
         ComPtr<IAdaptiveActionElement> selectAction;
         RETURN_IF_FAILED(containerAsContainerBase->get_SelectAction(&selectAction));
@@ -125,13 +126,13 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
 
-        XamlBuilder::HandleSelectAction(adaptiveCardElement,
-                           selectAction.Get(),
-                           renderContext,
-                           containerBorderAsUIElement.Get(),
-                           XamlBuilder::SupportsInteractivity(hostConfig.Get()),
-                           true,
-                           containerControl);
+        XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                        selectAction.Get(),
+                                        renderContext,
+                                        containerBorderAsUIElement.Get(),
+                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                        true,
+                                        containerControl);
         return S_OK;
     }
     CATCH_RETURN;
