@@ -28,23 +28,25 @@ namespace AdaptiveNamespace
                                              &m_randomAccessStreamStatics));
     }
 
-    HRESULT XamlBuilder::AllImagesLoaded()
+    HRESULT XamlBuilder::AllImagesLoaded() noexcept try
     {
         FireAllImagesLoaded();
         return S_OK;
     }
+    CATCH_RETURN;
 
-    HRESULT XamlBuilder::ImagesLoadingHadError()
+    HRESULT XamlBuilder::ImagesLoadingHadError() noexcept try
     {
         FireImagesLoadingHadError();
         return S_OK;
     }
+    CATCH_RETURN;
 
     HRESULT XamlBuilder::BuildXamlTreeFromAdaptiveCard(_In_ IAdaptiveCard* adaptiveCard,
                                                        _Outptr_ IFrameworkElement** xamlTreeRoot,
                                                        _In_ IAdaptiveRenderContext* renderContext,
                                                        ComPtr<XamlBuilder> xamlBuilder,
-                                                       ABI::AdaptiveNamespace::ContainerStyle defaultContainerStyle)
+                                                       ABI::AdaptiveNamespace::ContainerStyle defaultContainerStyle) noexcept try
     {
         *xamlTreeRoot = nullptr;
         if (adaptiveCard != nullptr)
@@ -72,8 +74,8 @@ namespace AdaptiveNamespace
             RETURN_IF_FAILED(MakeAndInitialize<AdaptiveRenderArgs>(&renderArgs, containerStyle, nullptr, nullptr));
 
             ComPtr<IPanel> bodyElementContainer;
-            ComPtr<IUIElement> rootElement =
-                CreateRootCardElement(adaptiveCard, renderContext, renderArgs.Get(), xamlBuilder, &bodyElementContainer);
+            ComPtr<IUIElement> rootElement;
+            RETURN_IF_FAILED(CreateRootCardElement(adaptiveCard, renderContext, renderArgs.Get(), xamlBuilder, &bodyElementContainer, &rootElement));
             ComPtr<IFrameworkElement> rootAsFrameworkElement;
             RETURN_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
 
@@ -171,6 +173,7 @@ namespace AdaptiveNamespace
         }
         return S_OK;
     }
+    CATCH_RETURN;
 
     HRESULT XamlBuilder::AddListener(_In_ IXamlBuilderListener* listener) noexcept try
     {
@@ -212,24 +215,26 @@ namespace AdaptiveNamespace
         m_enableXamlImageHandling = enableXamlImageHandling;
     }
 
-    static void ApplyMarginToXamlElement(_In_ IAdaptiveHostConfig* hostConfig, _In_ IFrameworkElement* element)
+    static HRESULT ApplyMarginToXamlElement(_In_ IAdaptiveHostConfig* hostConfig, _In_ IFrameworkElement* element) noexcept
     {
         ComPtr<IFrameworkElement> localElement(element);
         ComPtr<IAdaptiveSpacingConfig> spacingConfig;
-        THROW_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
+        RETURN_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
 
         UINT32 padding;
         spacingConfig->get_Padding(&padding);
         Thickness margin = {(double)padding, (double)padding, (double)padding, (double)padding};
 
-        THROW_IF_FAILED(localElement->put_Margin(margin));
+        RETURN_IF_FAILED(localElement->put_Margin(margin));
+        return S_OK;
     }
 
-    ComPtr<IUIElement> XamlBuilder::CreateRootCardElement(_In_ IAdaptiveCard* adaptiveCard,
-                                                          _In_ IAdaptiveRenderContext* renderContext,
-                                                          _In_ IAdaptiveRenderArgs* renderArgs,
-                                                          ComPtr<XamlBuilder> xamlBuilder,
-                                                          _Outptr_ IPanel** bodyElementContainer)
+    HRESULT XamlBuilder::CreateRootCardElement(_In_ IAdaptiveCard* adaptiveCard,
+                                               _In_ IAdaptiveRenderContext* renderContext,
+                                               _In_ IAdaptiveRenderArgs* renderArgs,
+                                               ComPtr<XamlBuilder> xamlBuilder,
+                                               _COM_Outptr_ IPanel** bodyElementContainer,
+                                               _COM_Outptr_ IUIElement** rootElementResult) noexcept try
     {
         // The root of an adaptive card is a composite of several elements, depending on the card
         // properties.  From back to front these are:
@@ -240,36 +245,36 @@ namespace AdaptiveNamespace
         ComPtr<IGrid> rootElement =
             XamlHelpers::CreateXamlClass<IGrid>(HStringReference(RuntimeClass_Windows_UI_Xaml_Controls_Grid));
         ComPtr<IAdaptiveHostConfig> hostConfig;
-        THROW_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
+        RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
         ComPtr<IAdaptiveCardConfig> adaptiveCardConfig;
-        THROW_IF_FAILED(hostConfig->get_AdaptiveCard(&adaptiveCardConfig));
+        RETURN_IF_FAILED(hostConfig->get_AdaptiveCard(&adaptiveCardConfig));
 
         ComPtr<IPanel> rootAsPanel;
-        THROW_IF_FAILED(rootElement.As(&rootAsPanel));
+        RETURN_IF_FAILED(rootElement.As(&rootAsPanel));
         ABI::AdaptiveNamespace::ContainerStyle containerStyle;
-        THROW_IF_FAILED(renderArgs->get_ContainerStyle(&containerStyle));
+        RETURN_IF_FAILED(renderArgs->get_ContainerStyle(&containerStyle));
 
         ABI::Windows::UI::Color backgroundColor;
         if (SUCCEEDED(GetBackgroundColorFromStyle(containerStyle, hostConfig.Get(), &backgroundColor)))
         {
             ComPtr<IBrush> backgroundColorBrush = XamlHelpers::GetSolidColorBrush(backgroundColor);
-            THROW_IF_FAILED(rootAsPanel->put_Background(backgroundColorBrush.Get()));
+            RETURN_IF_FAILED(rootAsPanel->put_Background(backgroundColorBrush.Get()));
         }
 
         ComPtr<IAdaptiveBackgroundImage> backgroundImage;
         BOOL backgroundImageIsValid;
-        THROW_IF_FAILED(adaptiveCard->get_BackgroundImage(&backgroundImage));
-        THROW_IF_FAILED(IsBackgroundImageValid(backgroundImage.Get(), &backgroundImageIsValid));
+        RETURN_IF_FAILED(adaptiveCard->get_BackgroundImage(&backgroundImage));
+        RETURN_IF_FAILED(IsBackgroundImageValid(backgroundImage.Get(), &backgroundImageIsValid));
         if (backgroundImageIsValid)
         {
             XamlHelpers::ApplyBackgroundToRoot(rootAsPanel.Get(), backgroundImage.Get(), renderContext, renderArgs);
         }
 
         ComPtr<IAdaptiveSpacingConfig> spacingConfig;
-        THROW_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
+        RETURN_IF_FAILED(hostConfig->get_Spacing(&spacingConfig));
 
         UINT32 padding;
-        THROW_IF_FAILED(spacingConfig->get_Padding(&padding));
+        RETURN_IF_FAILED(spacingConfig->get_Padding(&padding));
 
         // Configure WholeItemsPanel to not clip bleeding containers
         WholeItemsPanel::SetBleedMargin(padding);
@@ -277,24 +282,24 @@ namespace AdaptiveNamespace
         // Now create the inner stack panel to serve as the root host for all the
         // body elements and apply padding from host configuration
         ComPtr<WholeItemsPanel> bodyElementHost;
-        THROW_IF_FAILED(MakeAndInitialize<WholeItemsPanel>(&bodyElementHost));
+        RETURN_IF_FAILED(MakeAndInitialize<WholeItemsPanel>(&bodyElementHost));
         bodyElementHost->SetMainPanel(TRUE);
         bodyElementHost->SetAdaptiveHeight(TRUE);
 
         ComPtr<IFrameworkElement> bodyElementHostAsElement;
-        THROW_IF_FAILED(bodyElementHost.As(&bodyElementHostAsElement));
-        ApplyMarginToXamlElement(hostConfig.Get(), bodyElementHostAsElement.Get());
+        RETURN_IF_FAILED(bodyElementHost.As(&bodyElementHostAsElement));
+        RETURN_IF_FAILED(ApplyMarginToXamlElement(hostConfig.Get(), bodyElementHostAsElement.Get()));
 
         ABI::AdaptiveNamespace::HeightType adaptiveCardHeightType;
-        THROW_IF_FAILED(adaptiveCard->get_Height(&adaptiveCardHeightType));
+        RETURN_IF_FAILED(adaptiveCard->get_Height(&adaptiveCardHeightType));
 
         XamlHelpers::AppendXamlElementToPanel(bodyElementHost.Get(), rootAsPanel.Get(), adaptiveCardHeightType);
-        THROW_IF_FAILED(bodyElementHost.CopyTo(bodyElementContainer));
+        RETURN_IF_FAILED(bodyElementHost.CopyTo(bodyElementContainer));
 
         if (xamlBuilder && xamlBuilder->m_fixedDimensions)
         {
             ComPtr<IFrameworkElement> rootAsFrameworkElement;
-            THROW_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
+            RETURN_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
             rootAsFrameworkElement->put_Width(xamlBuilder->m_fixedWidth);
             rootAsFrameworkElement->put_Height(xamlBuilder->m_fixedHeight);
             rootAsFrameworkElement->put_MaxHeight(xamlBuilder->m_fixedHeight);
@@ -303,14 +308,16 @@ namespace AdaptiveNamespace
         if (adaptiveCardHeightType == ABI::AdaptiveNamespace::HeightType::Stretch)
         {
             ComPtr<IFrameworkElement> rootAsFrameworkElement;
-            THROW_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
+            RETURN_IF_FAILED(rootElement.As(&rootAsFrameworkElement));
             rootAsFrameworkElement->put_VerticalAlignment(ABI::Windows::UI::Xaml::VerticalAlignment::VerticalAlignment_Stretch);
         }
 
-        ComPtr<IUIElement> rootAsUIElement;
-        THROW_IF_FAILED(rootElement.As(&rootAsUIElement));
-        return rootAsUIElement;
+        ComPtr<IUIElement> rootUIElement;
+        RETURN_IF_FAILED(rootElement.As(&rootUIElement));
+        *rootElementResult = rootUIElement.Detach();
+        return S_OK;
     }
+    CATCH_RETURN;
 
     void XamlBuilder::FireAllImagesLoaded()
     {

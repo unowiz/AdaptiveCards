@@ -23,15 +23,15 @@ namespace AdaptiveNamespace
 
     public:
         // IImageLoadTrackerListener
-        STDMETHODIMP AllImagesLoaded();
-        STDMETHODIMP ImagesLoadingHadError();
+        STDMETHODIMP AllImagesLoaded() noexcept;
+        STDMETHODIMP ImagesLoadingHadError() noexcept;
 
-        static HRESULT BuildXamlTreeFromAdaptiveCard(
-            _In_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
-            _COM_Outptr_ ABI::Windows::UI::Xaml::IFrameworkElement** xamlTreeRoot,
-            _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-            Microsoft::WRL::ComPtr<XamlBuilder> xamlBuilder,
-            ABI::AdaptiveNamespace::ContainerStyle defaultContainerStyle = ABI::AdaptiveNamespace::ContainerStyle::Default);
+        static HRESULT BuildXamlTreeFromAdaptiveCard(_In_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
+                                                     _COM_Outptr_ ABI::Windows::UI::Xaml::IFrameworkElement** xamlTreeRoot,
+                                                     _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                                     Microsoft::WRL::ComPtr<XamlBuilder> xamlBuilder,
+                                                     ABI::AdaptiveNamespace::ContainerStyle defaultContainerStyle =
+                                                         ABI::AdaptiveNamespace::ContainerStyle::Default) noexcept;
         HRESULT AddListener(_In_ IXamlBuilderListener* listener) noexcept;
         HRESULT RemoveListener(_In_ IXamlBuilderListener* listener) noexcept;
         void SetFixedDimensions(UINT width, UINT height) noexcept;
@@ -65,12 +65,12 @@ namespace AdaptiveNamespace
         bool m_enableXamlImageHandling = false;
         Microsoft::WRL::ComPtr<ABI::AdaptiveNamespace::IAdaptiveCardResourceResolvers> m_resourceResolvers;
 
-        static Microsoft::WRL::ComPtr<ABI::Windows::UI::Xaml::IUIElement>
-        CreateRootCardElement(_In_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
-                              _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                              _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
-                              Microsoft::WRL::ComPtr<XamlBuilder> xamlBuilder,
-                              _Outptr_ ABI::Windows::UI::Xaml::Controls::IPanel** bodyElementContainer);
+        static HRESULT CreateRootCardElement(_In_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
+                                             _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                                             _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
+                                             Microsoft::WRL::ComPtr<XamlBuilder> xamlBuilder,
+                                             _COM_Outptr_ ABI::Windows::UI::Xaml::Controls::IPanel** bodyElementContainer,
+                                             _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** rootUIElement) noexcept;
 
         template<typename T>
         void SetAutoSize(T* destination, IInspectable* parentElement, IInspectable* imageContainer, bool isVisible, bool imageFiresOpenEvent);
