@@ -1,4 +1,4 @@
-!// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 #include "pch.h"
 
@@ -800,51 +800,6 @@ namespace AdaptiveNamespace::XamlHelpers
                 THROW_IF_FAILED(separator.CopyTo(addedSeparator));
             }
         }
-    }
-
-    template<typename T>
-    static HRESULT TryGetResourceFromResourceDictionaries(_In_ IResourceDictionary* resourceDictionary,
-                                                          std::wstring resourceName,
-                                                          _COM_Outptr_ T** style) noexcept
-    {
-        if (resourceDictionary == nullptr)
-        {
-            return E_INVALIDARG;
-        }
-
-        *style = nullptr;
-        try
-        {
-            // Get a resource key for the requested style that we can use for ResourceDictionary Lookups
-            ComPtr<IPropertyValueStatics> propertyValueStatics;
-            THROW_IF_FAILED(GetActivationFactory(HStringReference(RuntimeClass_Windows_Foundation_PropertyValue).Get(),
-                                                 &propertyValueStatics));
-            ComPtr<IInspectable> resourceKey;
-            THROW_IF_FAILED(propertyValueStatics->CreateString(HStringReference(resourceName.c_str()).Get(),
-                                                               resourceKey.GetAddressOf()));
-
-            // Search for the named resource
-            ComPtr<IResourceDictionary> strongDictionary = resourceDictionary;
-            ComPtr<IInspectable> dictionaryValue;
-            ComPtr<IMap<IInspectable*, IInspectable*>> resourceDictionaryMap;
-
-            boolean hasKey{};
-            if (SUCCEEDED(strongDictionary.As(&resourceDictionaryMap)) &&
-                SUCCEEDED(resourceDictionaryMap->HasKey(resourceKey.Get(), &hasKey)) && hasKey &&
-                SUCCEEDED(resourceDictionaryMap->Lookup(resourceKey.Get(), dictionaryValue.GetAddressOf())))
-            {
-                ComPtr<T> resourceToReturn;
-                if (SUCCEEDED(dictionaryValue.As(&resourceToReturn)))
-                {
-                    THROW_IF_FAILED(resourceToReturn.CopyTo(style));
-                    return S_OK;
-                }
-            }
-        }
-        catch (...)
-        {
-        }
-        return E_FAIL;
     }
 
     HRESULT BuildActionSetHelper(_In_opt_ ABI::AdaptiveNamespace::IAdaptiveCard* adaptiveCard,
