@@ -4,55 +4,19 @@
 
 #include "XamlBuilder.h"
 
-#include "AdaptiveBase64Util.h"
-#include "AdaptiveCardGetResourceStreamArgs.h"
-#include "AdaptiveCardRendererComponent.h"
-#include "AdaptiveCardResourceResolvers.h"
-#include "AdaptiveColorsConfig.h"
-#include "AdaptiveColorConfig.h"
 #include "AdaptiveFeatureRegistration.h"
-#include "AdaptiveHostConfig.h"
-#include "AdaptiveImage.h"
 #include "AdaptiveRenderArgs.h"
-#include "AdaptiveShowCardAction.h"
-#include "AdaptiveTextRun.h"
-#include "DateTimeParser.h"
-#include "ElementTagContent.h"
-#include "FeatureRegistration.h"
-#include "TextHelpers.h"
-#include "json/json.h"
-#include "MarkDownParser.h"
-#include "MediaHelpers.h"
-#include <robuffer.h>
-#include "WholeItemsPanel.h"
-#include <windows.web.http.h>
-#include <windows.web.http.filters.h>
 #include "ActionHelpers.h"
 #include "XamlHelpers.h"
 
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
 using namespace ABI::AdaptiveNamespace;
-using namespace ABI::Windows::Data::Json;
 using namespace ABI::Windows::Foundation;
 using namespace ABI::Windows::Foundation::Collections;
-using namespace ABI::Windows::Storage;
-using namespace ABI::Windows::Storage::Streams;
-using namespace ABI::Windows::UI;
-using namespace ABI::Windows::UI::Text;
 using namespace ABI::Windows::UI::Xaml;
-using namespace ABI::Windows::UI::Xaml::Data;
-using namespace ABI::Windows::UI::Xaml::Documents;
 using namespace ABI::Windows::UI::Xaml::Controls;
-using namespace ABI::Windows::UI::Xaml::Controls::Primitives;
-using namespace ABI::Windows::UI::Xaml::Markup;
 using namespace ABI::Windows::UI::Xaml::Media;
-using namespace ABI::Windows::UI::Xaml::Media::Imaging;
-using namespace ABI::Windows::UI::Xaml::Shapes;
-using namespace ABI::Windows::UI::Xaml::Input;
-using namespace ABI::Windows::UI::Xaml::Automation;
-using namespace ABI::Windows::Web::Http;
-using namespace ABI::Windows::Web::Http::Filters;
 
 namespace AdaptiveNamespace
 {

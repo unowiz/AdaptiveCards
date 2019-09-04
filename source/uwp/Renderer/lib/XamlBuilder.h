@@ -92,6 +92,7 @@ namespace AdaptiveNamespace
 
         template<typename T>
         void PopulateImageFromUrlAsync(_In_ ABI::Windows::Foundation::IUriRuntimeClass* imageUrl, _In_ T* imageControl);
+
         void FireAllImagesLoaded();
         void FireImagesLoadingHadError();
     };
