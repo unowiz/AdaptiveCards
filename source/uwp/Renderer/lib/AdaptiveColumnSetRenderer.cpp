@@ -212,14 +212,13 @@ namespace AdaptiveNamespace
 
         ComPtr<IUIElement> columnSetBorderAsUIElement;
         RETURN_IF_FAILED(columnSetBorder.As(&columnSetBorderAsUIElement));
-
-        XamlHelpers::HandleSelectAction(adaptiveCardElement,
-                                        selectAction.Get(),
-                                        renderContext,
-                                        columnSetBorderAsUIElement.Get(),
-                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
-                                        true,
-                                        columnSetControl);
+        RETURN_IF_FAILED(XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                                         selectAction.Get(),
+                                                         renderContext,
+                                                         columnSetBorderAsUIElement.Get(),
+                                                         XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                                         true,
+                                                         columnSetControl));
         return S_OK;
     }
     CATCH_RETURN;

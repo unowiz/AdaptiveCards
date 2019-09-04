@@ -351,13 +351,13 @@ namespace AdaptiveNamespace
 
         RETURN_IF_FAILED(automationPropertiesStatics->SetName(imageAsDependencyObject.Get(), altText.Get()));
 
-        XamlHelpers::HandleSelectAction(adaptiveCardElement,
-                                        selectAction.Get(),
-                                        renderContext,
-                                        imageAsUIElement.Get(),
-                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
-                                        true,
-                                        imageControl);
+        RETURN_IF_FAILED(XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                                         selectAction.Get(),
+                                                         renderContext,
+                                                         imageAsUIElement.Get(),
+                                                         XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                                         true,
+                                                         imageControl));
 
         return S_OK;
     }

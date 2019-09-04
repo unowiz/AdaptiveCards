@@ -126,13 +126,13 @@ namespace AdaptiveNamespace
         ComPtr<IAdaptiveHostConfig> hostConfig;
         RETURN_IF_FAILED(renderContext->get_HostConfig(&hostConfig));
 
-        XamlHelpers::HandleSelectAction(adaptiveCardElement,
-                                        selectAction.Get(),
-                                        renderContext,
-                                        containerBorderAsUIElement.Get(),
-                                        XamlHelpers::SupportsInteractivity(hostConfig.Get()),
-                                        true,
-                                        containerControl);
+        RETURN_IF_FAILED(XamlHelpers::HandleSelectAction(adaptiveCardElement,
+                                                         selectAction.Get(),
+                                                         renderContext,
+                                                         containerBorderAsUIElement.Get(),
+                                                         XamlHelpers::SupportsInteractivity(hostConfig.Get()),
+                                                         true,
+                                                         containerControl));
         return S_OK;
     }
     CATCH_RETURN;

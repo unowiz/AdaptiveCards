@@ -552,13 +552,8 @@ namespace AdaptiveNamespace::ActionHelpers
 
         // Wrap the action in a button
         ComPtr<IUIElement> touchTargetUIElement;
-        XamlHelpers::WrapInTouchTarget(nullptr,
-                                       actionUIElement.Get(),
-                                       localInlineAction.Get(),
-                                       renderContext,
-                                       false,
-                                       L"Adaptive.Input.Text.InlineAction",
-                                       &touchTargetUIElement);
+        THROW_IF_FAILED(XamlHelpers::WrapInTouchTarget(
+            nullptr, actionUIElement.Get(), localInlineAction.Get(), renderContext, false, L"Adaptive.Input.Text.InlineAction", &touchTargetUIElement));
 
         ComPtr<IFrameworkElement> touchTargetFrameworkElement;
         THROW_IF_FAILED(touchTargetUIElement.As(&touchTargetFrameworkElement));

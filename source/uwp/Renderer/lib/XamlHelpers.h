@@ -28,21 +28,21 @@ namespace AdaptiveNamespace::XamlHelpers
         return solidColorBrushAsBrush;
     }
 
-    void WireButtonClickToAction(_In_ ABI::Windows::UI::Xaml::Controls::IButton* button,
-                                 _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                                 _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext);
+    HRESULT WireButtonClickToAction(_In_ ABI::Windows::UI::Xaml::Controls::IButton* button,
+                                    _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                                    _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext) noexcept;
 
     HRESULT SetStyleFromResourceDictionary(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                            const std::wstring& resourceName,
                                            _In_ ABI::Windows::UI::Xaml::IFrameworkElement* frameworkElement) noexcept;
 
-    void WrapInTouchTarget(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
-                           _In_ ABI::Windows::UI::Xaml::IUIElement* elementToWrap,
-                           _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
-                           _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                           bool fullWidth,
-                           const std::wstring& style,
-                           _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** finalElement);
+    HRESULT WrapInTouchTarget(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
+                              _In_ ABI::Windows::UI::Xaml::IUIElement* elementToWrap,
+                              _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* action,
+                              _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                              bool fullWidth,
+                              const std::wstring& style,
+                              _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** finalElement) noexcept;
 
     Microsoft::WRL::ComPtr<ABI::Windows::UI::Xaml::IUIElement> CreateSeparator(_In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
                                                                                UINT spacing,
@@ -302,13 +302,13 @@ namespace AdaptiveNamespace::XamlHelpers
                                     _In_ ABI::AdaptiveNamespace::IAdaptiveRenderArgs* renderArgs,
                                     _Out_ ABI::AdaptiveNamespace::ContainerStyle* containerStyle);
 
-    void HandleSelectAction(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
-                            _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* selectAction,
-                            _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
-                            _In_ ABI::Windows::UI::Xaml::IUIElement* uiElement,
-                            bool supportsInteractivity,
-                            bool fullWidthTouchTarget,
-                            _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** outUiElement);
+    HRESULT HandleSelectAction(_In_ ABI::AdaptiveNamespace::IAdaptiveCardElement* adaptiveCardElement,
+                               _In_ ABI::AdaptiveNamespace::IAdaptiveActionElement* selectAction,
+                               _In_ ABI::AdaptiveNamespace::IAdaptiveRenderContext* renderContext,
+                               _In_ ABI::Windows::UI::Xaml::IUIElement* uiElement,
+                               bool supportsInteractivity,
+                               bool fullWidthTouchTarget,
+                               _COM_Outptr_ ABI::Windows::UI::Xaml::IUIElement** outUiElement);
 
     bool SupportsInteractivity(_In_ ABI::AdaptiveNamespace::IAdaptiveHostConfig* hostConfig);
 
